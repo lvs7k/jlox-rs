@@ -1,6 +1,6 @@
 use std::io::{self, BufRead, Write};
 
-use jlox_rs::scanner::Scanner;
+use jlox_rs::run;
 
 fn main() -> io::Result<()> {
     let mut args = std::env::args().skip(1);
@@ -22,12 +22,16 @@ fn main() -> io::Result<()> {
 
 fn run_file(path: &str) -> io::Result<()> {
     let source = std::fs::read_to_string(path)?;
-    run(source);
+
+    if run(source).is_err() {
+        std::process::exit(65);
+    }
+
     Ok(())
 }
 
 fn run_prompt() -> io::Result<()> {
-    let mut buf = String::new();
+    let mut buf;
     let mut stdin = io::stdin().lock();
     let mut stdout = io::stdout();
 
@@ -35,28 +39,15 @@ fn run_prompt() -> io::Result<()> {
         print!("> ");
         stdout.flush()?;
 
-        buf.clear();
+        buf = String::new();
         stdin.read_line(&mut buf)?;
 
         if buf.is_empty() {
             break;
         }
 
-        run(buf);
-        buf = String::new();
+        let _ = run(buf);
     }
 
     Ok(())
-}
-
-fn run(source: String) {
-    print!("source: {}", source);
-
-    let scanner = Scanner::new(source);
-    let tokens = scanner.scan_tokens();
-
-    // For now, just print the tokens.
-    for token in tokens {
-        println!("token: {:?}", token);
-    }
 }
