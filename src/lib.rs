@@ -1,6 +1,10 @@
 pub mod error;
 pub mod scanner;
 
+mod object;
+mod token;
+mod token_type;
+
 use error::LoxError;
 use scanner::Scanner;
 
