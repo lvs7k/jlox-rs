@@ -1,9 +1,35 @@
+use std::{collections::HashMap, sync::LazyLock};
+
 use crate::{
     error::{lox_error, LoxError},
     object::Object,
     token::Token,
     token_type::TokenType,
 };
+
+static KEYWORDS: LazyLock<HashMap<String, TokenType>> = LazyLock::new(|| {
+    use TokenType::*;
+
+    let mut m = HashMap::new();
+    m.insert("and".to_string(), And);
+    m.insert("class".to_string(), Class);
+    m.insert("else".to_string(), Else);
+    m.insert("false".to_string(), False);
+    m.insert("for".to_string(), For);
+    m.insert("fun".to_string(), Fun);
+    m.insert("if".to_string(), If);
+    m.insert("nil".to_string(), Nil);
+    m.insert("or".to_string(), Or);
+    m.insert("print".to_string(), Print);
+    m.insert("return".to_string(), Return);
+    m.insert("super".to_string(), Super);
+    m.insert("this".to_string(), This);
+    m.insert("true".to_string(), True);
+    m.insert("var".to_string(), Var);
+    m.insert("while".to_string(), While);
+
+    m
+});
 
 #[derive(Debug)]
 pub struct Scanner {
@@ -115,6 +141,8 @@ impl Scanner {
             _ => {
                 if self.is_digit(c) {
                     self.number();
+                } else if self.is_alpha(c) {
+                    self.identifier();
                 } else {
                     lox_error(self.line, "Unexpected character.");
                     return Err(LoxError::ScanError);
@@ -123,6 +151,19 @@ impl Scanner {
         }
 
         Ok(())
+    }
+
+    fn identifier(&mut self) {
+        while self.is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+
+        let text: String = self.source[self.start..self.current].iter().collect();
+        if let Some(typ) = KEYWORDS.get(&text) {
+            self.add_token(*typ, Object::Nil);
+        } else {
+            self.add_token(TokenType::Identifier, Object::Nil);
+        }
     }
 
     fn number(&mut self) {
@@ -196,6 +237,14 @@ impl Scanner {
             return '\0';
         }
         self.source[self.current + 1]
+    }
+
+    fn is_alpha(&self, c: char) -> bool {
+        c.is_ascii_alphabetic() || c == '_'
+    }
+
+    fn is_alpha_numeric(&self, c: char) -> bool {
+        self.is_alpha(c) || self.is_digit(c)
     }
 
     fn is_digit(&self, c: char) -> bool {
