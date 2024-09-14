@@ -1,6 +1,6 @@
 use crate::{object::Object, token::Token};
 
-pub(crate) trait Visitor<R> {
+pub trait Visitor<R> {
     fn visit_literal_expr(&self, expr: &Literal) -> R;
     fn visit_unary_expr(&self, expr: &Unary) -> R;
     fn visit_binary_expr(&self, expr: &Binary) -> R;
@@ -8,7 +8,7 @@ pub(crate) trait Visitor<R> {
 }
 
 #[derive(Debug)]
-pub(crate) enum Expr {
+pub enum Expr {
     Literal(Literal),
     Unary(Unary),
     Binary(Binary),
@@ -16,7 +16,7 @@ pub(crate) enum Expr {
 }
 
 impl Expr {
-    pub(crate) fn accept<V, R>(&self, visitor: &V) -> R
+    pub fn accept<V, R>(&self, visitor: &V) -> R
     where
         V: Visitor<R>,
     {
@@ -30,24 +30,24 @@ impl Expr {
 }
 
 #[derive(Debug)]
-pub(crate) struct Literal {
-    pub(crate) value: Object,
+pub struct Literal {
+    pub value: Object,
 }
 
 impl Literal {
-    pub(crate) fn new(value: Object) -> Self {
+    pub fn new(value: Object) -> Self {
         Self { value }
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct Unary {
-    pub(crate) operator: Token,
-    pub(crate) right: Box<Expr>,
+pub struct Unary {
+    pub operator: Token,
+    pub right: Box<Expr>,
 }
 
 impl Unary {
-    pub(crate) fn new(operator: Token, right: Expr) -> Self {
+    pub fn new(operator: Token, right: Expr) -> Self {
         Self {
             operator,
             right: Box::new(right),
@@ -56,14 +56,14 @@ impl Unary {
 }
 
 #[derive(Debug)]
-pub(crate) struct Binary {
-    pub(crate) left: Box<Expr>,
-    pub(crate) operator: Token,
-    pub(crate) right: Box<Expr>,
+pub struct Binary {
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }
 
 impl Binary {
-    pub(crate) fn new(left: Expr, operator: Token, right: Expr) -> Self {
+    pub fn new(left: Expr, operator: Token, right: Expr) -> Self {
         Self {
             left: Box::new(left),
             operator,
@@ -73,12 +73,12 @@ impl Binary {
 }
 
 #[derive(Debug)]
-pub(crate) struct Grouping {
-    pub(crate) expression: Box<Expr>,
+pub struct Grouping {
+    pub expression: Box<Expr>,
 }
 
 impl Grouping {
-    pub(crate) fn new(expression: Expr) -> Self {
+    pub fn new(expression: Expr) -> Self {
         Self {
             expression: Box::new(expression),
         }

@@ -1,6 +1,6 @@
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum TokenType {
+pub enum TokenType {
     // Single-character tokens.
     LeftParen,
     RightParen,

@@ -3,10 +3,10 @@ use std::ops::Deref;
 use crate::expr::{Binary, Expr, Grouping, Literal, Unary, Visitor};
 
 #[derive(Debug)]
-pub(crate) struct AstPrinter;
+pub struct AstPrinter;
 
 impl AstPrinter {
-    pub(crate) fn print(&self, expr: &Expr) -> String {
+    pub fn print(&self, expr: &Expr) -> String {
         expr.accept(self)
     }
 

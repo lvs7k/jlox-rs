@@ -2,14 +2,14 @@ use crate::{object::Object, token_type::TokenType};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
-    pub(crate) typ: TokenType,
-    pub(crate) lexeme: String,
-    pub(crate) literal: Object,
-    pub(crate) line: usize,
+    pub typ: TokenType,
+    pub lexeme: String,
+    pub literal: Object,
+    pub line: usize,
 }
 
 impl Token {
-    pub(crate) fn new(typ: TokenType, lexeme: String, literal: Object, line: usize) -> Self {
+    pub fn new(typ: TokenType, lexeme: String, literal: Object, line: usize) -> Self {
         Self {
             typ,
             lexeme,
