@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::expr::{Binary, Expr, Grouping, Literal, Unary, Visitor};
+use crate::expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, Visitor};
 
 #[derive(Debug)]
 pub struct AstPrinter;
@@ -29,19 +29,19 @@ impl AstPrinter {
 }
 
 impl Visitor<String> for AstPrinter {
-    fn visit_literal_expr(&self, expr: &Literal) -> String {
+    fn visit_literal_expr(&self, expr: &ExprLiteral) -> String {
         expr.value.to_string()
     }
 
-    fn visit_unary_expr(&self, expr: &Unary) -> String {
+    fn visit_unary_expr(&self, expr: &ExprUnary) -> String {
         self.parenthesize(&expr.operator.lexeme, &[&*expr.right])
     }
 
-    fn visit_binary_expr(&self, expr: &Binary) -> String {
+    fn visit_binary_expr(&self, expr: &ExprBinary) -> String {
         self.parenthesize(&expr.operator.lexeme, &[&*expr.left, &*expr.right])
     }
 
-    fn visit_grouping_expr(&self, expr: &Grouping) -> String {
+    fn visit_grouping_expr(&self, expr: &ExprGrouping) -> String {
         self.parenthesize("group", &[&*expr.expression])
     }
 }
@@ -54,16 +54,14 @@ mod test {
 
     #[test]
     fn astprinter_books_example() {
-        let left = Expr::Unary(Unary::new(
+        let left = Expr::unary(
             Token::new(Minus, "-".into(), Object::Nil, 1),
-            Expr::Literal(Literal::new(Object::Num(123f64))),
-        ));
+            Expr::literal(Object::Num(123f64)),
+        );
         let op = Token::new(Star, "*".into(), Object::Nil, 1);
-        let right = Expr::Grouping(Grouping::new(Expr::Literal(Literal::new(Object::Num(
-            45.67f64,
-        )))));
+        let right = Expr::grouping(Expr::literal(Object::Num(45.67f64)));
 
-        let expression = Expr::Binary(Binary::new(left, op, right));
+        let expression = Expr::binary(left, op, right);
 
         assert_eq!(
             "(* (- 123) (group 45.67))".to_string(),
