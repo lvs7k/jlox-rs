@@ -113,12 +113,37 @@ impl Scanner {
             '\n' => self.line += 1,
             '"' => self.string()?,
             _ => {
-                lox_error(self.line, "Unexpected character.");
-                return Err(LoxError::ScanError);
+                if self.is_digit(c) {
+                    self.number();
+                } else {
+                    lox_error(self.line, "Unexpected character.");
+                    return Err(LoxError::ScanError);
+                }
             }
         }
 
         Ok(())
+    }
+
+    fn number(&mut self) {
+        while self.is_digit(self.peek()) {
+            self.advance();
+        }
+
+        // Look for a fractional part.
+        if self.peek() == '.' && self.is_digit(self.peek_next()) {
+            // Consume the "."
+            self.advance();
+
+            while self.is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let str: String = self.source[self.start..self.current].iter().collect();
+        let value = str.parse().unwrap();
+
+        self.add_token(TokenType::Number, Object::Num(value));
     }
 
     fn string(&mut self) -> Result<(), LoxError> {
@@ -164,6 +189,17 @@ impl Scanner {
             return '\0';
         }
         self.source[self.current]
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            return '\0';
+        }
+        self.source[self.current + 1]
+    }
+
+    fn is_digit(&self, c: char) -> bool {
+        c.is_ascii_digit()
     }
 
     fn is_at_end(&self) -> bool {
