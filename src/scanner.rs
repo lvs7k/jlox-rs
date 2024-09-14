@@ -111,11 +111,38 @@ impl Scanner {
             }
             ' ' | '\r' | '\t' => (),
             '\n' => self.line += 1,
+            '"' => self.string()?,
             _ => {
                 lox_error(self.line, "Unexpected character.");
                 return Err(LoxError::ScanError);
             }
         }
+
+        Ok(())
+    }
+
+    fn string(&mut self) -> Result<(), LoxError> {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            lox_error(self.line, "Unterminated string.");
+            return Err(LoxError::ScanError);
+        }
+
+        // The closing ".
+        self.advance();
+
+        // Trim the surrounding quotes.
+        let value = self.source[self.start + 1..self.current - 1]
+            .iter()
+            .collect();
+        let literal = Object::Str(value);
+        self.add_token(TokenType::String, literal);
 
         Ok(())
     }
