@@ -1,6 +1,7 @@
 use crate::{object::Object, token_type::TokenType};
 
-pub(crate) struct Token {
+#[derive(Debug)]
+pub struct Token {
     pub(crate) typ: TokenType,
     pub(crate) lexeme: String,
     pub(crate) literal: Object,
