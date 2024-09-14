@@ -3,7 +3,7 @@ pub enum LoxError {
     ScanError,
 }
 
-pub fn error(line: usize, message: &str) {
+pub(crate) fn lox_error(line: usize, message: &str) {
     report(line, "", message);
 }
 

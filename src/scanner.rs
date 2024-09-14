@@ -1,4 +1,9 @@
-use crate::{object::Object, token::Token, token_type::TokenType};
+use crate::{
+    error::{lox_error, LoxError},
+    object::Object,
+    token::Token,
+    token_type::TokenType,
+};
 
 #[derive(Debug)]
 pub struct Scanner {
@@ -21,11 +26,19 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(mut self) -> Vec<Token> {
+    pub fn scan_tokens(mut self) -> Result<Vec<Token>, LoxError> {
+        let mut had_error = false;
+
         while self.is_at_end() {
             // We are at the beginning of the next lexeme.
             self.start = self.current;
-            self.scan_token();
+            if self.scan_token().is_err() {
+                had_error = true;
+            }
+        }
+
+        if had_error {
+            return Err(LoxError::ScanError);
         }
 
         self.tokens.push(Token::new(
@@ -34,10 +47,11 @@ impl Scanner {
             Object::Nil,
             self.line,
         ));
-        self.tokens
+
+        Ok(self.tokens)
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<(), LoxError> {
         use Object::Nil;
         use TokenType::*;
 
@@ -53,8 +67,57 @@ impl Scanner {
             '+' => self.add_token(Plus, Nil),
             ';' => self.add_token(Semicolon, Nil),
             '*' => self.add_token(Star, Nil),
-            _ => (),
+            '!' => {
+                let typ = if self.match_char('=') {
+                    BangEqual
+                } else {
+                    Bang
+                };
+                self.add_token(typ, Nil);
+            }
+            '=' => {
+                let typ = if self.match_char('=') {
+                    EqualEqual
+                } else {
+                    Equal
+                };
+                self.add_token(typ, Nil);
+            }
+            '<' => {
+                let typ = if self.match_char('=') {
+                    LessEqual
+                } else {
+                    Less
+                };
+                self.add_token(typ, Nil);
+            }
+            '>' => {
+                let typ = if self.match_char('=') {
+                    GreaterEqual
+                } else {
+                    Greater
+                };
+                self.add_token(typ, Nil);
+            }
+            _ => {
+                lox_error(self.line, "Unexpected character.");
+                return Err(LoxError::ScanError);
+            }
         }
+
+        Ok(())
+    }
+
+    fn match_char(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        if self.source[self.current] != expected {
+            return false;
+        }
+
+        self.current += 1;
+        true
     }
 
     fn is_at_end(&self) -> bool {
