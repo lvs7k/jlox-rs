@@ -55,7 +55,7 @@ impl Scanner {
     pub fn scan_tokens(mut self) -> Result<Vec<Token>, LoxError> {
         let mut had_error = false;
 
-        while self.is_at_end() {
+        while !self.is_at_end() {
             // We are at the beginning of the next lexeme.
             self.start = self.current;
             if self.scan_token().is_err() {
@@ -264,5 +264,70 @@ impl Scanner {
     fn add_token(&mut self, typ: TokenType, literal: Object) {
         let text = self.source[self.start..self.current].iter().collect();
         self.tokens.push(Token::new(typ, text, literal, self.line));
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn scan_tokens_succeed_for_correct_if_expression() {
+        use TokenType::*;
+
+        let source = "if true { id_a + 123.456 } else { \"hello\" != 789 }";
+        let scanner = Scanner::new(source.to_string());
+        let tokens = scanner.scan_tokens().unwrap();
+
+        let answers = vec![
+            Token::new(If, "if".into(), Object::Nil, 1),
+            Token::new(True, "true".into(), Object::Nil, 1),
+            Token::new(LeftBrace, "{".into(), Object::Nil, 1),
+            Token::new(Identifier, "id_a".into(), Object::Nil, 1),
+            Token::new(Plus, "+".into(), Object::Nil, 1),
+            Token::new(Number, "123.456".into(), Object::Num(123.456), 1),
+            Token::new(RightBrace, "}".into(), Object::Nil, 1),
+            Token::new(Else, "else".into(), Object::Nil, 1),
+            Token::new(LeftBrace, "{".into(), Object::Nil, 1),
+            Token::new(String, "\"hello\"".into(), Object::Str("hello".into()), 1),
+            Token::new(BangEqual, "!=".into(), Object::Nil, 1),
+            Token::new(Number, "789".into(), Object::Num(789f64), 1),
+            Token::new(RightBrace, "}".into(), Object::Nil, 1),
+            Token::new(Eof, "".into(), Object::Nil, 1),
+        ];
+
+        assert_eq!(tokens, answers);
+        for (token, ref answer) in tokens.iter().zip(answers) {
+            assert_eq!(token, answer);
+        }
+    }
+
+    #[test]
+    fn scan_tokens_succeed_for_multiple_line_of_code() {
+        use TokenType::*;
+
+        let source = "// This is comment.\n123\n+\n456";
+        let scanner = Scanner::new(source.to_string());
+        let tokens = scanner.scan_tokens().unwrap();
+
+        let answers = vec![
+            Token::new(Number, "123".into(), Object::Num(123f64), 2),
+            Token::new(Plus, "+".into(), Object::Nil, 3),
+            Token::new(Number, "456".into(), Object::Num(456f64), 4),
+            Token::new(Eof, "".into(), Object::Nil, 4),
+        ];
+
+        assert_eq!(tokens, answers);
+        for (token, ref answer) in tokens.iter().zip(answers) {
+            assert_eq!(token, answer);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn scan_tokens_failed_for_non_terminated_string() {
+        let source = "  \"hello ";
+        let scanner = Scanner::new(source.to_string());
+        let _tokens = scanner.scan_tokens().unwrap(); // should panic
     }
 }
