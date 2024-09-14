@@ -99,6 +99,18 @@ impl Scanner {
                 };
                 self.add_token(typ, Nil);
             }
+            '/' => {
+                if self.match_char('/') {
+                    // A comment goes until the end of the line.
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(Slash, Nil);
+                }
+            }
+            ' ' | '\r' | '\t' => (),
+            '\n' => self.line += 1,
             _ => {
                 lox_error(self.line, "Unexpected character.");
                 return Err(LoxError::ScanError);
@@ -118,6 +130,13 @@ impl Scanner {
 
         self.current += 1;
         true
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            return '\0';
+        }
+        self.source[self.current]
     }
 
     fn is_at_end(&self) -> bool {
