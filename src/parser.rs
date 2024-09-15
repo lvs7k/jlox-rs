@@ -157,6 +157,25 @@ impl Parser {
         LoxError::ParseError
     }
 
+    fn synchronize(&mut self) {
+        use TokenType::*;
+
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().typ == Semicolon {
+                return;
+            }
+
+            match self.peek().typ {
+                Class | Fun | Var | For | If | While | Print | Return => return,
+                _ => (),
+            }
+
+            self.advance();
+        }
+    }
+
     fn is_at_end(&self) -> bool {
         self.peek().typ == TokenType::Eof
     }
