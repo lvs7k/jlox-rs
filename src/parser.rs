@@ -78,7 +78,7 @@ impl Parser {
 
         while self.match_tokentype(&[Slash, Star]) {
             let operator = self.previous().clone();
-            let right = self.factor()?;
+            let right = self.unary()?;
             expr = Expr::binary(expr, operator, right);
         }
 
@@ -150,7 +150,7 @@ impl Parser {
     }
 
     fn advance(&mut self) -> &Token {
-        if self.is_at_end() {
+        if !self.is_at_end() {
             self.current += 1;
         }
         self.previous()
@@ -190,5 +190,149 @@ impl Parser {
 
     fn peek(&self) -> &Token {
         &self.tokens[self.current]
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::binary_heap;
+
+    use crate::{ast_printer::AstPrinter, scanner::Scanner};
+
+    use super::*;
+
+    fn parse_source(source: &str) -> Result<Option<Expr>, LoxError> {
+        let scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens()?;
+        let mut parser = Parser::new(tokens);
+        parser.parse()
+    }
+
+    #[test]
+    fn parse_primary() {
+        assert_eq!(
+            parse_source("true").unwrap(),
+            Some(Expr::literal(Object::Bool(true)))
+        );
+        assert_eq!(
+            parse_source("false").unwrap(),
+            Some(Expr::literal(Object::Bool(false)))
+        );
+        assert_eq!(
+            parse_source("nil").unwrap(),
+            Some(Expr::literal(Object::Nil))
+        );
+        assert_eq!(
+            parse_source("123.456").unwrap(),
+            Some(Expr::literal(Object::Num(123.456)))
+        );
+        assert_eq!(
+            parse_source("\"hello, world\"").unwrap(),
+            Some(Expr::literal(Object::Str("hello, world".to_string())))
+        );
+        assert_eq!(
+            parse_source("(1 + 2) * 3").unwrap(),
+            Some(Expr::binary(
+                Expr::grouping(Expr::binary(
+                    Expr::literal(Object::Num(1f64)),
+                    Token::new(TokenType::Plus, "+".into(), Object::Nil, 1),
+                    Expr::literal(Object::Num(2f64))
+                )),
+                Token::new(TokenType::Star, "*".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(3f64))
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_unary() {
+        assert_eq!(
+            parse_source("-123.456").unwrap(),
+            Some(Expr::unary(
+                Token::new(TokenType::Minus, "-".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(123.456))
+            ))
+        );
+        assert_eq!(
+            parse_source("!false").unwrap(),
+            Some(Expr::unary(
+                Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                Expr::literal(Object::Bool(false))
+            ))
+        );
+        assert_eq!(
+            parse_source("!!true").unwrap(),
+            Some(Expr::unary(
+                Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                Expr::unary(
+                    Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                    Expr::literal(Object::Bool(true))
+                )
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_factor() {
+        assert_eq!(
+            parse_source("123 * 456 / 789").unwrap(),
+            Some(Expr::binary(
+                Expr::binary(
+                    Expr::literal(Object::Num(123f64)),
+                    Token::new(TokenType::Star, "*".into(), Object::Nil, 1),
+                    Expr::literal(Object::Num(456f64)),
+                ),
+                Token::new(TokenType::Slash, "/".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(789f64))
+            ))
+        )
+    }
+
+    #[test]
+    fn parse_term() {
+        assert_eq!(
+            parse_source("123 + 456 - 789").unwrap(),
+            Some(Expr::binary(
+                Expr::binary(
+                    Expr::literal(Object::Num(123f64)),
+                    Token::new(TokenType::Plus, "+".into(), Object::Nil, 1),
+                    Expr::literal(Object::Num(456f64)),
+                ),
+                Token::new(TokenType::Minus, "-".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(789f64))
+            ))
+        )
+    }
+
+    #[test]
+    fn parse_comparison() {
+        assert_eq!(
+            parse_source("123 >= 456 < 789").unwrap(),
+            Some(Expr::binary(
+                Expr::binary(
+                    Expr::literal(Object::Num(123f64)),
+                    Token::new(TokenType::GreaterEqual, ">=".into(), Object::Nil, 1),
+                    Expr::literal(Object::Num(456f64)),
+                ),
+                Token::new(TokenType::Less, "<".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(789f64))
+            ))
+        )
+    }
+
+    #[test]
+    fn parse_equality() {
+        assert_eq!(
+            parse_source("123 != 456 == 789").unwrap(),
+            Some(Expr::binary(
+                Expr::binary(
+                    Expr::literal(Object::Num(123f64)),
+                    Token::new(TokenType::BangEqual, "!=".into(), Object::Nil, 1),
+                    Expr::literal(Object::Num(456f64)),
+                ),
+                Token::new(TokenType::EqualEqual, "==".into(), Object::Nil, 1),
+                Expr::literal(Object::Num(789f64))
+            ))
+        )
     }
 }

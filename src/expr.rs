@@ -7,7 +7,7 @@ pub trait Visitor<R> {
     fn visit_grouping_expr(&self, expr: &ExprGrouping) -> R;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Literal(ExprLiteral),
     Unary(ExprUnary),
@@ -54,25 +54,25 @@ impl Expr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ExprLiteral {
     pub value: Object,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ExprUnary {
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ExprBinary {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ExprGrouping {
     pub expression: Box<Expr>,
 }

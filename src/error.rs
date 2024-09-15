@@ -11,7 +11,7 @@ pub fn lox_error_line(line: usize, message: &str) {
 }
 
 fn report(line: usize, where_: &str, message: &str) {
-    eprintln!("[line {line}] Error {where_}: {message}");
+    eprintln!("[line {line}] Error{where_}: {message}");
 }
 
 pub fn lox_error_token(token: &Token, message: &str) {
