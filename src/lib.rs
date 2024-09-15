@@ -13,7 +13,7 @@ use error::LoxError;
 use parser::Parser;
 use scanner::Scanner;
 
-pub fn run(source: String) -> Result<(), LoxError> {
+pub fn run(source: &str) -> Result<(), LoxError> {
     print!("source: {}", source);
 
     let scanner = Scanner::new(source);

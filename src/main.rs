@@ -23,7 +23,7 @@ fn main() -> io::Result<()> {
 fn run_file(path: &str) -> io::Result<()> {
     let source = std::fs::read_to_string(path)?;
 
-    if run(source).is_err() {
+    if run(&source).is_err() {
         std::process::exit(65);
     }
 
@@ -46,7 +46,7 @@ fn run_prompt() -> io::Result<()> {
             break;
         }
 
-        let _ = run(buf);
+        let _ = run(&buf);
     }
 
     Ok(())

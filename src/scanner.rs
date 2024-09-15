@@ -41,7 +41,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(source: String) -> Self {
+    pub fn new(source: &str) -> Self {
         let chars = source.chars().collect();
         Self {
             source: chars,
@@ -276,7 +276,7 @@ mod test {
         use TokenType::*;
 
         let source = "if true { id_a + 123.456 } else { \"hello\" != 789 }";
-        let scanner = Scanner::new(source.to_string());
+        let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens().unwrap();
 
         let answers = vec![
@@ -307,7 +307,7 @@ mod test {
         use TokenType::*;
 
         let source = "// This is comment.\n123\n+\n456";
-        let scanner = Scanner::new(source.to_string());
+        let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens().unwrap();
 
         let answers = vec![
@@ -327,7 +327,7 @@ mod test {
     #[should_panic]
     fn scan_tokens_failed_for_non_terminated_string() {
         let source = "  \"hello ";
-        let scanner = Scanner::new(source.to_string());
+        let scanner = Scanner::new(source);
         let _tokens = scanner.scan_tokens().unwrap(); // should panic
     }
 }
