@@ -55,10 +55,10 @@ mod test {
     #[test]
     fn astprinter_books_example() {
         let left = Expr::unary(
-            Token::new(Minus, "-".into(), Object::Nil, 1),
+            Token::new(Minus, "-".into(), Object::Null, 1),
             Expr::literal(Object::Num(123f64)),
         );
-        let op = Token::new(Star, "*".into(), Object::Nil, 1);
+        let op = Token::new(Star, "*".into(), Object::Null, 1);
         let right = Expr::grouping(Expr::literal(Object::Num(45.67f64)));
 
         let expression = Expr::binary(left, op, right);

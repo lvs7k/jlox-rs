@@ -3,7 +3,7 @@ pub enum Object {
     Bool(bool),
     Num(f64),
     Str(String),
-    Nil,
+    Null,
 }
 
 impl std::fmt::Display for Object {
@@ -12,7 +12,7 @@ impl std::fmt::Display for Object {
             Self::Bool(v) => write!(f, "{}", v),
             Self::Num(v) => write!(f, "{}", v),
             Self::Str(v) => write!(f, "{}", v),
-            Self::Nil => write!(f, "nil"),
+            Self::Null => write!(f, "nil"),
         }
     }
 }

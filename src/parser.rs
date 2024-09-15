@@ -107,7 +107,7 @@ impl Parser {
             return Ok(Expr::literal(Object::Bool(true)));
         }
         if self.match_tokentype(&[Nil]) {
-            return Ok(Expr::literal(Object::Nil));
+            return Ok(Expr::literal(Object::Null));
         }
 
         if self.match_tokentype(&[Number, String]) {
@@ -220,7 +220,7 @@ mod test {
         );
         assert_eq!(
             parse_source("nil").unwrap(),
-            Some(Expr::literal(Object::Nil))
+            Some(Expr::literal(Object::Null))
         );
         assert_eq!(
             parse_source("123.456").unwrap(),
@@ -235,10 +235,10 @@ mod test {
             Some(Expr::binary(
                 Expr::grouping(Expr::binary(
                     Expr::literal(Object::Num(1f64)),
-                    Token::new(TokenType::Plus, "+".into(), Object::Nil, 1),
+                    Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
                     Expr::literal(Object::Num(2f64))
                 )),
-                Token::new(TokenType::Star, "*".into(), Object::Nil, 1),
+                Token::new(TokenType::Star, "*".into(), Object::Null, 1),
                 Expr::literal(Object::Num(3f64))
             ))
         );
@@ -249,23 +249,23 @@ mod test {
         assert_eq!(
             parse_source("-123.456").unwrap(),
             Some(Expr::unary(
-                Token::new(TokenType::Minus, "-".into(), Object::Nil, 1),
+                Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
                 Expr::literal(Object::Num(123.456))
             ))
         );
         assert_eq!(
             parse_source("!false").unwrap(),
             Some(Expr::unary(
-                Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                 Expr::literal(Object::Bool(false))
             ))
         );
         assert_eq!(
             parse_source("!!true").unwrap(),
             Some(Expr::unary(
-                Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                 Expr::unary(
-                    Token::new(TokenType::Bang, "!".into(), Object::Nil, 1),
+                    Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                     Expr::literal(Object::Bool(true))
                 )
             ))
@@ -279,10 +279,10 @@ mod test {
             Some(Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
-                    Token::new(TokenType::Star, "*".into(), Object::Nil, 1),
+                    Token::new(TokenType::Star, "*".into(), Object::Null, 1),
                     Expr::literal(Object::Num(456f64)),
                 ),
-                Token::new(TokenType::Slash, "/".into(), Object::Nil, 1),
+                Token::new(TokenType::Slash, "/".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
             ))
         )
@@ -295,10 +295,10 @@ mod test {
             Some(Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
-                    Token::new(TokenType::Plus, "+".into(), Object::Nil, 1),
+                    Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
                     Expr::literal(Object::Num(456f64)),
                 ),
-                Token::new(TokenType::Minus, "-".into(), Object::Nil, 1),
+                Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
             ))
         )
@@ -311,10 +311,10 @@ mod test {
             Some(Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
-                    Token::new(TokenType::GreaterEqual, ">=".into(), Object::Nil, 1),
+                    Token::new(TokenType::GreaterEqual, ">=".into(), Object::Null, 1),
                     Expr::literal(Object::Num(456f64)),
                 ),
-                Token::new(TokenType::Less, "<".into(), Object::Nil, 1),
+                Token::new(TokenType::Less, "<".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
             ))
         )
@@ -327,10 +327,10 @@ mod test {
             Some(Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
-                    Token::new(TokenType::BangEqual, "!=".into(), Object::Nil, 1),
+                    Token::new(TokenType::BangEqual, "!=".into(), Object::Null, 1),
                     Expr::literal(Object::Num(456f64)),
                 ),
-                Token::new(TokenType::EqualEqual, "==".into(), Object::Nil, 1),
+                Token::new(TokenType::EqualEqual, "==".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
             ))
         )

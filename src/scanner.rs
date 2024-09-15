@@ -70,7 +70,7 @@ impl Scanner {
         self.tokens.push(Token::new(
             TokenType::Eof,
             "".into(),
-            Object::Nil,
+            Object::Null,
             self.line,
         ));
 
@@ -78,28 +78,28 @@ impl Scanner {
     }
 
     fn scan_token(&mut self) -> Result<(), LoxError> {
-        use Object::Nil;
+        use Object::Null;
         use TokenType::*;
 
         let c = self.advance();
         match c {
-            '(' => self.add_token(LeftParen, Nil),
-            ')' => self.add_token(RightParen, Nil),
-            '{' => self.add_token(LeftBrace, Nil),
-            '}' => self.add_token(RightBrace, Nil),
-            ',' => self.add_token(Comma, Nil),
-            '.' => self.add_token(Dot, Nil),
-            '-' => self.add_token(Minus, Nil),
-            '+' => self.add_token(Plus, Nil),
-            ';' => self.add_token(Semicolon, Nil),
-            '*' => self.add_token(Star, Nil),
+            '(' => self.add_token(LeftParen, Null),
+            ')' => self.add_token(RightParen, Null),
+            '{' => self.add_token(LeftBrace, Null),
+            '}' => self.add_token(RightBrace, Null),
+            ',' => self.add_token(Comma, Null),
+            '.' => self.add_token(Dot, Null),
+            '-' => self.add_token(Minus, Null),
+            '+' => self.add_token(Plus, Null),
+            ';' => self.add_token(Semicolon, Null),
+            '*' => self.add_token(Star, Null),
             '!' => {
                 let typ = if self.match_char('=') {
                     BangEqual
                 } else {
                     Bang
                 };
-                self.add_token(typ, Nil);
+                self.add_token(typ, Null);
             }
             '=' => {
                 let typ = if self.match_char('=') {
@@ -107,7 +107,7 @@ impl Scanner {
                 } else {
                     Equal
                 };
-                self.add_token(typ, Nil);
+                self.add_token(typ, Null);
             }
             '<' => {
                 let typ = if self.match_char('=') {
@@ -115,7 +115,7 @@ impl Scanner {
                 } else {
                     Less
                 };
-                self.add_token(typ, Nil);
+                self.add_token(typ, Null);
             }
             '>' => {
                 let typ = if self.match_char('=') {
@@ -123,7 +123,7 @@ impl Scanner {
                 } else {
                     Greater
                 };
-                self.add_token(typ, Nil);
+                self.add_token(typ, Null);
             }
             '/' => {
                 if self.match_char('/') {
@@ -132,7 +132,7 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token(Slash, Nil);
+                    self.add_token(Slash, Null);
                 }
             }
             ' ' | '\r' | '\t' => (),
@@ -160,9 +160,9 @@ impl Scanner {
 
         let text: String = self.source[self.start..self.current].iter().collect();
         if let Some(typ) = KEYWORDS.get(&text) {
-            self.add_token(*typ, Object::Nil);
+            self.add_token(*typ, Object::Null);
         } else {
-            self.add_token(TokenType::Identifier, Object::Nil);
+            self.add_token(TokenType::Identifier, Object::Null);
         }
     }
 
@@ -280,20 +280,20 @@ mod test {
         let tokens = scanner.scan_tokens().unwrap();
 
         let answers = vec![
-            Token::new(If, "if".into(), Object::Nil, 1),
-            Token::new(True, "true".into(), Object::Nil, 1),
-            Token::new(LeftBrace, "{".into(), Object::Nil, 1),
-            Token::new(Identifier, "id_a".into(), Object::Nil, 1),
-            Token::new(Plus, "+".into(), Object::Nil, 1),
+            Token::new(If, "if".into(), Object::Null, 1),
+            Token::new(True, "true".into(), Object::Null, 1),
+            Token::new(LeftBrace, "{".into(), Object::Null, 1),
+            Token::new(Identifier, "id_a".into(), Object::Null, 1),
+            Token::new(Plus, "+".into(), Object::Null, 1),
             Token::new(Number, "123.456".into(), Object::Num(123.456), 1),
-            Token::new(RightBrace, "}".into(), Object::Nil, 1),
-            Token::new(Else, "else".into(), Object::Nil, 1),
-            Token::new(LeftBrace, "{".into(), Object::Nil, 1),
+            Token::new(RightBrace, "}".into(), Object::Null, 1),
+            Token::new(Else, "else".into(), Object::Null, 1),
+            Token::new(LeftBrace, "{".into(), Object::Null, 1),
             Token::new(String, "\"hello\"".into(), Object::Str("hello".into()), 1),
-            Token::new(BangEqual, "!=".into(), Object::Nil, 1),
+            Token::new(BangEqual, "!=".into(), Object::Null, 1),
             Token::new(Number, "789".into(), Object::Num(789f64), 1),
-            Token::new(RightBrace, "}".into(), Object::Nil, 1),
-            Token::new(Eof, "".into(), Object::Nil, 1),
+            Token::new(RightBrace, "}".into(), Object::Null, 1),
+            Token::new(Eof, "".into(), Object::Null, 1),
         ];
 
         assert_eq!(tokens, answers);
@@ -312,9 +312,9 @@ mod test {
 
         let answers = vec![
             Token::new(Number, "123".into(), Object::Num(123f64), 2),
-            Token::new(Plus, "+".into(), Object::Nil, 3),
+            Token::new(Plus, "+".into(), Object::Null, 3),
             Token::new(Number, "456".into(), Object::Num(456f64), 4),
-            Token::new(Eof, "".into(), Object::Nil, 4),
+            Token::new(Eof, "".into(), Object::Null, 4),
         ];
 
         assert_eq!(tokens, answers);
