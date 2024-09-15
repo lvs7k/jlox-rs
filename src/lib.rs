@@ -8,7 +8,9 @@ mod object;
 mod token;
 mod token_type;
 
+use ast_printer::AstPrinter;
 use error::LoxError;
+use parser::Parser;
 use scanner::Scanner;
 
 pub fn run(source: String) -> Result<(), LoxError> {
@@ -17,9 +19,11 @@ pub fn run(source: String) -> Result<(), LoxError> {
     let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
 
-    // For now, just print the tokens.
-    for token in tokens {
-        println!("token: {:?}", token);
+    let mut parser = Parser::new(tokens);
+    let expression = parser.parse()?;
+
+    if let Some(expression) = expression {
+        println!("{}", AstPrinter.print(&expression));
     }
 
     Ok(())

@@ -17,102 +17,110 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    fn expression(&mut self) -> Expr {
+    pub fn parse(&mut self) -> Result<Option<Expr>, LoxError> {
+        match self.expression() {
+            Ok(expr) => Ok(Some(expr)),
+            Err(LoxError::ParseError) => Ok(None),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Expr {
+    fn equality(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
-        let mut expr = self.comparison();
+        let mut expr = self.comparison()?;
 
         while self.match_tokentype(&[BangEqual, EqualEqual]) {
             let operator = self.previous().clone();
-            let right = self.comparison();
+            let right = self.comparison()?;
             expr = Expr::binary(expr, operator, right);
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn comparison(&mut self) -> Expr {
+    fn comparison(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
-        let mut expr = self.term();
+        let mut expr = self.term()?;
 
         while self.match_tokentype(&[Greater, GreaterEqual, Less, LessEqual]) {
             let operator = self.previous().clone();
-            let right = self.term();
+            let right = self.term()?;
             expr = Expr::binary(expr, operator, right);
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn term(&mut self) -> Expr {
+    fn term(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
-        let mut expr = self.factor();
+        let mut expr = self.factor()?;
 
         while self.match_tokentype(&[Minus, Plus]) {
             let operator = self.previous().clone();
-            let right = self.factor();
+            let right = self.factor()?;
             expr = Expr::binary(expr, operator, right);
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn factor(&mut self) -> Expr {
+    fn factor(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
-        let mut expr = self.unary();
+        let mut expr = self.unary()?;
 
         while self.match_tokentype(&[Slash, Star]) {
             let operator = self.previous().clone();
-            let right = self.factor();
+            let right = self.factor()?;
             expr = Expr::binary(expr, operator, right);
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
         if self.match_tokentype(&[Bang, Minus]) {
             let operator = self.previous().clone();
-            let right = self.unary();
-            return Expr::unary(operator, right);
+            let right = self.unary()?;
+            return Ok(Expr::unary(operator, right));
         }
 
         self.primary()
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, LoxError> {
         use TokenType::*;
 
         if self.match_tokentype(&[False]) {
-            return Expr::literal(Object::Bool(false));
+            return Ok(Expr::literal(Object::Bool(false)));
         }
         if self.match_tokentype(&[True]) {
-            return Expr::literal(Object::Bool(true));
+            return Ok(Expr::literal(Object::Bool(true)));
         }
         if self.match_tokentype(&[Nil]) {
-            return Expr::literal(Object::Nil);
+            return Ok(Expr::literal(Object::Nil));
         }
 
         if self.match_tokentype(&[Number, String]) {
-            return Expr::literal(self.previous().clone().literal);
+            return Ok(Expr::literal(self.previous().clone().literal));
         }
 
         if self.match_tokentype(&[LeftParen]) {
-            let expr = self.expression();
-            self.consume(RightParen, "Expect ')' after expression.");
-            return Expr::grouping(expr);
+            let expr = self.expression()?;
+            self.consume(RightParen, "Expect ')' after expression.")?;
+            return Ok(Expr::grouping(expr));
         }
 
-        todo!();
+        Err(self.error(self.peek(), "Expect expression."))
     }
 
     fn match_tokentype(&mut self, types: &[TokenType]) -> bool {
