@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::LazyLock};
 
 use crate::{
-    error::{lox_error, LoxError},
+    error::{lox_error_line, LoxError},
     object::Object,
     token::Token,
     token_type::TokenType,
@@ -144,7 +144,7 @@ impl Scanner {
                 } else if self.is_alpha(c) {
                     self.identifier();
                 } else {
-                    lox_error(self.line, "Unexpected character.");
+                    lox_error_line(self.line, "Unexpected character.");
                     return Err(LoxError::ScanError);
                 }
             }
@@ -196,7 +196,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            lox_error(self.line, "Unterminated string.");
+            lox_error_line(self.line, "Unterminated string.");
             return Err(LoxError::ScanError);
         }
 
