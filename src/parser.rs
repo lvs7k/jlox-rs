@@ -28,6 +28,14 @@ impl Parser {
         Ok(statements)
     }
 
+    // before 8.1.2 Parsing statements
+    pub(crate) fn parse_one_expr(&mut self) -> Result<Expr, LoxError> {
+        match self.expression() {
+            Ok(expr) => Ok(expr),
+            Err(err) => Err(err),
+        }
+    }
+
     fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
     }
@@ -41,13 +49,13 @@ impl Parser {
 
     fn print_statement(&mut self) -> Result<Stmt, LoxError> {
         let value = self.expression()?;
-        self.consume(TokenType::Semicolon, "Expect ';' after value.");
+        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Stmt::print(value))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
         let expr = self.expression()?;
-        self.consume(TokenType::Semicolon, "Expect ';' after expression.");
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Stmt::expression(expr))
     }
 
@@ -225,7 +233,7 @@ mod test {
         let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
         let mut parser = Parser::new(tokens);
-        parser.parse()
+        parser.parse_one_expr()
     }
 
     #[test]

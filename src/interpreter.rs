@@ -2,6 +2,7 @@ use crate::{
     error::{self, LoxError},
     expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor},
     object::Object,
+    stmt::{Stmt, StmtExpression, StmtPrint, StmtVisitor},
     token::Token,
     token_type::TokenType,
 };
@@ -14,21 +15,18 @@ impl Interpreter {
         Self {}
     }
 
-    pub fn interpret<E>(&self, expression: E) -> Result<(), LoxError>
-    where
-        E: std::ops::Deref<Target = Expr>,
-    {
-        match self.evaluate(&*expression) {
-            Ok(value) => {
-                println!("{}", value);
-                Ok(())
+    pub fn interpret(&self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
+        for statement in statements {
+            match self.execute(statement) {
+                Err(LoxError::RuntimeError(token, message)) => {
+                    error::lox_runtime_error(&token, &message);
+                    return Err(LoxError::RuntimeError(token, message));
+                }
+                Err(error) => return Err(error),
+                _ => (),
             }
-            Err(LoxError::RuntimeError(token, message)) => {
-                error::lox_runtime_error(&token, &message);
-                Err(LoxError::RuntimeError(token, message))
-            }
-            Err(e) => Err(e),
         }
+        Ok(())
     }
 
     fn evaluate<E>(&self, expr: E) -> Result<Object, LoxError>
@@ -36,6 +34,13 @@ impl Interpreter {
         E: std::ops::Deref<Target = Expr>,
     {
         expr.accept(self)
+    }
+
+    fn execute<S>(&self, stmt: S) -> Result<(), LoxError>
+    where
+        S: std::ops::Deref<Target = Stmt>,
+    {
+        stmt.accept(self)
     }
 }
 
@@ -135,6 +140,19 @@ fn check_number_operands(operator: &Token, left: &Object, right: &Object) -> Res
     ))
 }
 
+impl StmtVisitor<Result<(), LoxError>> for Interpreter {
+    fn visit_expression_stmt(&self, stmt: &StmtExpression) -> Result<(), LoxError> {
+        self.evaluate(&stmt.expression)?;
+        Ok(())
+    }
+
+    fn visit_print_stmt(&self, stmt: &StmtPrint) -> Result<(), LoxError> {
+        let value = self.evaluate(&stmt.expression)?;
+        println!("{}", value);
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{parser::Parser, scanner::Scanner};
@@ -146,9 +164,9 @@ mod test {
         let tokens = scanner.scan_tokens()?;
 
         let mut parser = Parser::new(tokens);
-        let expression = parser.parse()?;
+        let statements = parser.parse_one_expr()?;
 
-        interpreter.evaluate(&expression)
+        interpreter.evaluate(&statements)
     }
 
     #[test]

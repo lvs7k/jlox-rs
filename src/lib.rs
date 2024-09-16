@@ -16,15 +16,13 @@ use parser::Parser;
 use scanner::Scanner;
 
 pub fn run(source: &str, interpreter: &mut Interpreter) -> Result<(), LoxError> {
-    print!("source: {}", source);
-
     let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
 
     let mut parser = Parser::new(tokens);
-    let expression = parser.parse()?;
+    let statements = parser.parse()?;
 
-    interpreter.interpret(&expression)?;
+    interpreter.interpret(&statements)?;
 
     Ok(())
 }
