@@ -195,9 +195,7 @@ impl Parser {
 
 #[cfg(test)]
 mod test {
-    use std::collections::binary_heap;
-
-    use crate::{ast_printer::AstPrinter, scanner::Scanner};
+    use crate::scanner::Scanner;
 
     use super::*;
 
