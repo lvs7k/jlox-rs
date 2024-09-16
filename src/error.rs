@@ -22,3 +22,7 @@ pub fn lox_error_token(token: &Token, message: &str) {
         report(token.line, &format!(" at '{}'", token.lexeme), message);
     }
 }
+
+pub fn lox_runtime_error(token: &Token, message: &str) {
+    todo!();
+}

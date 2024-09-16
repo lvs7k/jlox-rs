@@ -1,5 +1,5 @@
 use crate::{
-    error::LoxError,
+    error::{self, LoxError},
     expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, Visitor},
     object::Object,
     token::Token,
@@ -10,6 +10,23 @@ use crate::{
 pub struct Interpreter {}
 
 impl Interpreter {
+    pub fn interpret<E>(&self, expression: &E) -> Result<(), LoxError>
+    where
+        E: std::ops::Deref<Target = Expr>,
+    {
+        match self.evaluate(expression) {
+            Ok(value) => {
+                println!("{}", value);
+                Ok(())
+            }
+            Err(LoxError::RuntimeError(token, message)) => {
+                error::lox_runtime_error(&token, &message);
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     fn evaluate<E>(&self, expr: &E) -> Result<Object, LoxError>
     where
         E: std::ops::Deref<Target = Expr>,
