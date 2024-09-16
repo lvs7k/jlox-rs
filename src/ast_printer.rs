@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, Visitor};
+use crate::expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor};
 
 #[derive(Debug)]
 pub struct AstPrinter;
@@ -28,7 +28,7 @@ impl AstPrinter {
     }
 }
 
-impl Visitor<String> for AstPrinter {
+impl ExprVisitor<String> for AstPrinter {
     fn visit_literal_expr(&self, expr: &ExprLiteral) -> String {
         expr.value.to_string()
     }

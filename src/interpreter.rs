@@ -1,6 +1,6 @@
 use crate::{
     error::{self, LoxError},
-    expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, Visitor},
+    expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor},
     object::Object,
     token::Token,
     token_type::TokenType,
@@ -39,7 +39,7 @@ impl Interpreter {
     }
 }
 
-impl Visitor<Result<Object, LoxError>> for Interpreter {
+impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     fn visit_literal_expr(&self, expr: &ExprLiteral) -> Result<Object, LoxError> {
         Ok(expr.value.clone())
     }

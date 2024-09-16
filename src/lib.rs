@@ -6,6 +6,7 @@ pub mod scanner;
 mod ast_printer;
 mod expr;
 mod object;
+mod stmt;
 mod token;
 mod token_type;
 

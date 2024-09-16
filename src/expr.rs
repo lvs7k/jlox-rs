@@ -1,6 +1,6 @@
 use crate::{object::Object, token::Token};
 
-pub trait Visitor<R> {
+pub trait ExprVisitor<R> {
     fn visit_literal_expr(&self, expr: &ExprLiteral) -> R;
     fn visit_unary_expr(&self, expr: &ExprUnary) -> R;
     fn visit_binary_expr(&self, expr: &ExprBinary) -> R;
@@ -18,7 +18,7 @@ pub enum Expr {
 impl Expr {
     pub fn accept<V, R>(&self, visitor: &V) -> R
     where
-        V: Visitor<R>,
+        V: ExprVisitor<R>,
     {
         match *self {
             Expr::Literal(ref expr) => visitor.visit_literal_expr(expr),
