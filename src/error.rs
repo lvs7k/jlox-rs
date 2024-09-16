@@ -24,5 +24,5 @@ pub fn lox_error_token(token: &Token, message: &str) {
 }
 
 pub fn lox_runtime_error(token: &Token, message: &str) {
-    todo!();
+    eprintln!("{}\n[line {}]", message, token.line);
 }

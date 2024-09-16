@@ -21,7 +21,7 @@ impl Interpreter {
             }
             Err(LoxError::RuntimeError(token, message)) => {
                 error::lox_runtime_error(&token, &message);
-                Ok(())
+                Err(LoxError::RuntimeError(token, message))
             }
             Err(e) => Err(e),
         }
