@@ -1,6 +1,6 @@
 use crate::{token::Token, token_type::TokenType};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LoxError {
     ScanError,
     ParseError,

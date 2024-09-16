@@ -49,7 +49,10 @@ impl Visitor<Result<Object, LoxError>> for Interpreter {
 
         match expr.operator.typ {
             TokenType::Bang => Ok(!right),
-            TokenType::Minus => Ok(-right),
+            TokenType::Minus => {
+                check_number_operand(&expr.operator, &right)?;
+                Ok(-right)
+            }
             _ => unreachable!(),
         }
     }
@@ -130,4 +133,77 @@ fn check_number_operands(operator: &Token, left: &Object, right: &Object) -> Res
         operator.clone(),
         "Operands must be numbers.".into(),
     ))
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{parser::Parser, scanner::Scanner};
+
+    use super::*;
+
+    fn run(source: &str, interpreter: &mut Interpreter) -> Result<Object, LoxError> {
+        let scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens()?;
+
+        let mut parser = Parser::new(tokens);
+        let expression = parser.parse()?;
+
+        interpreter.evaluate(&expression)
+    }
+
+    #[test]
+    fn interpret_unary_expr() {
+        let mut interpreter = Interpreter::new();
+
+        assert_eq!(run("!true", &mut interpreter), Ok(Object::Bool(false)));
+        assert_eq!(run("!false", &mut interpreter), Ok(Object::Bool(true)));
+        assert_eq!(run("!123", &mut interpreter), Ok(Object::Bool(false)));
+        assert_eq!(run("!\"hello\"", &mut interpreter), Ok(Object::Bool(false)));
+        assert_eq!(run("!nil", &mut interpreter), Ok(Object::Bool(true)));
+
+        assert_eq!(run("-123", &mut interpreter), Ok(Object::Num(-123f64)));
+        assert!(matches!(
+            run("-true", &mut interpreter),
+            Err(LoxError::RuntimeError(..))
+        ));
+        assert!(matches!(
+            run("-\"hello\"", &mut interpreter),
+            Err(LoxError::RuntimeError(..))
+        ));
+        assert!(matches!(
+            run("-nil", &mut interpreter),
+            Err(LoxError::RuntimeError(..))
+        ));
+    }
+
+    #[test]
+    fn interpret_binary_expr() {
+        let mut interpreter = Interpreter::new();
+
+        assert_eq!(run("1 <= 2", &mut interpreter), Ok(Object::Bool(true)));
+        assert_eq!(run("1 <  2", &mut interpreter), Ok(Object::Bool(true)));
+        assert_eq!(run("1 >= 2", &mut interpreter), Ok(Object::Bool(false)));
+        assert_eq!(run("1 >  2", &mut interpreter), Ok(Object::Bool(false)));
+
+        assert_eq!(run("1 != 2", &mut interpreter), Ok(Object::Bool(true)));
+        assert_eq!(run("1 == 2", &mut interpreter), Ok(Object::Bool(false)));
+
+        assert_eq!(run("4 + 2", &mut interpreter), Ok(Object::Num(6f64)));
+        assert_eq!(run("4 - 2", &mut interpreter), Ok(Object::Num(2f64)));
+        assert_eq!(run("4 * 2", &mut interpreter), Ok(Object::Num(8f64)));
+        assert_eq!(run("4 / 2", &mut interpreter), Ok(Object::Num(2f64)));
+    }
+
+    #[test]
+    fn interpret_grouping_expr() {
+        let mut interpreter = Interpreter::new();
+
+        assert_eq!(run("!(!true)", &mut interpreter), Ok(Object::Bool(true)));
+        assert_eq!(run("(1 + 2) * 3", &mut interpreter), Ok(Object::Num(9f64)));
+        assert_eq!(run("1 + (2 * 3)", &mut interpreter), Ok(Object::Num(7f64)));
+        assert_eq!(
+            run("(1 + 2) * (3 - 4)", &mut interpreter),
+            Ok(Object::Num(-3f64))
+        );
+    }
 }
