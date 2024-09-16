@@ -4,6 +4,7 @@ use crate::{token::Token, token_type::TokenType};
 pub enum LoxError {
     ScanError,
     ParseError,
+    RuntimeError(Token, String),
 }
 
 pub fn lox_error_line(line: usize, message: &str) {
