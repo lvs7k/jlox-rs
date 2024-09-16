@@ -1,6 +1,6 @@
 use std::io::{self, BufRead, Write};
 
-use jlox_rs::{error::LoxError, run};
+use jlox_rs::{self, error::LoxError, interpreter::Interpreter};
 
 fn main() -> io::Result<()> {
     let mut args = std::env::args().skip(1);
@@ -24,8 +24,9 @@ fn run_file(path: &str) -> io::Result<()> {
     use LoxError::*;
 
     let source = std::fs::read_to_string(path)?;
+    let mut interpreter = Interpreter::new();
 
-    match run(&source) {
+    match jlox_rs::run(&source, &mut interpreter) {
         Err(ScanError | ParseError) => std::process::exit(65),
         Err(RuntimeError(..)) => std::process::exit(70),
         _ => (),
@@ -39,6 +40,8 @@ fn run_prompt() -> io::Result<()> {
     let mut stdin = io::stdin().lock();
     let mut stdout = io::stdout();
 
+    let mut interpreter = Interpreter::new();
+
     loop {
         print!("> ");
         stdout.flush()?;
@@ -50,7 +53,7 @@ fn run_prompt() -> io::Result<()> {
             break;
         }
 
-        let _ = run(&buf);
+        let _ = jlox_rs::run(&buf, &mut interpreter);
     }
 
     Ok(())

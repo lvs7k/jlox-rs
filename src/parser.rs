@@ -17,10 +17,9 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Option<Expr>, LoxError> {
+    pub fn parse(&mut self) -> Result<Expr, LoxError> {
         match self.expression() {
-            Ok(expr) => Ok(Some(expr)),
-            Err(LoxError::ParseError) => Ok(None),
+            Ok(expr) => Ok(expr),
             Err(err) => Err(err),
         }
     }
@@ -199,7 +198,7 @@ mod test {
 
     use super::*;
 
-    fn parse_source(source: &str) -> Result<Option<Expr>, LoxError> {
+    fn parse_source(source: &str) -> Result<Expr, LoxError> {
         let scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens()?;
         let mut parser = Parser::new(tokens);
@@ -210,27 +209,24 @@ mod test {
     fn parse_primary() {
         assert_eq!(
             parse_source("true").unwrap(),
-            Some(Expr::literal(Object::Bool(true)))
+            Expr::literal(Object::Bool(true))
         );
         assert_eq!(
             parse_source("false").unwrap(),
-            Some(Expr::literal(Object::Bool(false)))
+            Expr::literal(Object::Bool(false))
         );
-        assert_eq!(
-            parse_source("nil").unwrap(),
-            Some(Expr::literal(Object::Null))
-        );
+        assert_eq!(parse_source("nil").unwrap(), Expr::literal(Object::Null));
         assert_eq!(
             parse_source("123.456").unwrap(),
-            Some(Expr::literal(Object::Num(123.456)))
+            Expr::literal(Object::Num(123.456))
         );
         assert_eq!(
             parse_source("\"hello, world\"").unwrap(),
-            Some(Expr::literal(Object::Str("hello, world".to_string())))
+            Expr::literal(Object::Str("hello, world".to_string()))
         );
         assert_eq!(
             parse_source("(1 + 2) * 3").unwrap(),
-            Some(Expr::binary(
+            Expr::binary(
                 Expr::grouping(Expr::binary(
                     Expr::literal(Object::Num(1f64)),
                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
@@ -238,7 +234,7 @@ mod test {
                 )),
                 Token::new(TokenType::Star, "*".into(), Object::Null, 1),
                 Expr::literal(Object::Num(3f64))
-            ))
+            )
         );
     }
 
@@ -246,27 +242,27 @@ mod test {
     fn parse_unary() {
         assert_eq!(
             parse_source("-123.456").unwrap(),
-            Some(Expr::unary(
+            Expr::unary(
                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
                 Expr::literal(Object::Num(123.456))
-            ))
+            )
         );
         assert_eq!(
             parse_source("!false").unwrap(),
-            Some(Expr::unary(
+            Expr::unary(
                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                 Expr::literal(Object::Bool(false))
-            ))
+            )
         );
         assert_eq!(
             parse_source("!!true").unwrap(),
-            Some(Expr::unary(
+            Expr::unary(
                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                 Expr::unary(
                     Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
                     Expr::literal(Object::Bool(true))
                 )
-            ))
+            )
         );
     }
 
@@ -274,7 +270,7 @@ mod test {
     fn parse_factor() {
         assert_eq!(
             parse_source("123 * 456 / 789").unwrap(),
-            Some(Expr::binary(
+            Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
                     Token::new(TokenType::Star, "*".into(), Object::Null, 1),
@@ -282,7 +278,7 @@ mod test {
                 ),
                 Token::new(TokenType::Slash, "/".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
-            ))
+            )
         )
     }
 
@@ -290,7 +286,7 @@ mod test {
     fn parse_term() {
         assert_eq!(
             parse_source("123 + 456 - 789").unwrap(),
-            Some(Expr::binary(
+            Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
@@ -298,7 +294,7 @@ mod test {
                 ),
                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
-            ))
+            )
         )
     }
 
@@ -306,7 +302,7 @@ mod test {
     fn parse_comparison() {
         assert_eq!(
             parse_source("123 >= 456 < 789").unwrap(),
-            Some(Expr::binary(
+            Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
                     Token::new(TokenType::GreaterEqual, ">=".into(), Object::Null, 1),
@@ -314,7 +310,7 @@ mod test {
                 ),
                 Token::new(TokenType::Less, "<".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
-            ))
+            )
         )
     }
 
@@ -322,7 +318,7 @@ mod test {
     fn parse_equality() {
         assert_eq!(
             parse_source("123 != 456 == 789").unwrap(),
-            Some(Expr::binary(
+            Expr::binary(
                 Expr::binary(
                     Expr::literal(Object::Num(123f64)),
                     Token::new(TokenType::BangEqual, "!=".into(), Object::Null, 1),
@@ -330,7 +326,7 @@ mod test {
                 ),
                 Token::new(TokenType::EqualEqual, "==".into(), Object::Null, 1),
                 Expr::literal(Object::Num(789f64))
-            ))
+            )
         )
     }
 }

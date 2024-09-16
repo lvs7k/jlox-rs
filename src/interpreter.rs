@@ -10,11 +10,15 @@ use crate::{
 pub struct Interpreter {}
 
 impl Interpreter {
-    pub fn interpret<E>(&self, expression: &E) -> Result<(), LoxError>
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    pub fn interpret<E>(&self, expression: E) -> Result<(), LoxError>
     where
         E: std::ops::Deref<Target = Expr>,
     {
-        match self.evaluate(expression) {
+        match self.evaluate(&*expression) {
             Ok(value) => {
                 println!("{}", value);
                 Ok(())
@@ -27,7 +31,7 @@ impl Interpreter {
         }
     }
 
-    fn evaluate<E>(&self, expr: &E) -> Result<Object, LoxError>
+    fn evaluate<E>(&self, expr: E) -> Result<Object, LoxError>
     where
         E: std::ops::Deref<Target = Expr>,
     {
@@ -41,7 +45,7 @@ impl Visitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_unary_expr(&self, expr: &ExprUnary) -> Result<Object, LoxError> {
-        let right = self.evaluate(&expr.right)?;
+        let right = self.evaluate(&*expr.right)?;
 
         match expr.operator.typ {
             TokenType::Bang => Ok(!right),
@@ -51,8 +55,8 @@ impl Visitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_binary_expr(&self, expr: &ExprBinary) -> Result<Object, LoxError> {
-        let left = self.evaluate(&expr.left)?;
-        let right = self.evaluate(&expr.right)?;
+        let left = self.evaluate(&*expr.left)?;
+        let right = self.evaluate(&*expr.right)?;
 
         match expr.operator.typ {
             TokenType::Greater => {
@@ -102,7 +106,7 @@ impl Visitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_grouping_expr(&self, expr: &ExprGrouping) -> Result<Object, LoxError> {
-        self.evaluate(&expr.expression)
+        self.evaluate(&*expr.expression)
     }
 }
 

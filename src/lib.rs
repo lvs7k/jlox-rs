@@ -9,12 +9,12 @@ mod object;
 mod token;
 mod token_type;
 
-use ast_printer::AstPrinter;
 use error::LoxError;
+use interpreter::Interpreter;
 use parser::Parser;
 use scanner::Scanner;
 
-pub fn run(source: &str) -> Result<(), LoxError> {
+pub fn run(source: &str, interpreter: &mut Interpreter) -> Result<(), LoxError> {
     print!("source: {}", source);
 
     let scanner = Scanner::new(source);
@@ -23,9 +23,7 @@ pub fn run(source: &str) -> Result<(), LoxError> {
     let mut parser = Parser::new(tokens);
     let expression = parser.parse()?;
 
-    if let Some(expression) = expression {
-        println!("{}", AstPrinter.print(&expression));
-    }
+    interpreter.interpret(&expression)?;
 
     Ok(())
 }
