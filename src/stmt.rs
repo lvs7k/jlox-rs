@@ -32,6 +32,10 @@ impl Stmt {
     pub fn print(expression: Expr) -> Self {
         Self::Print(StmtPrint { expression })
     }
+
+    pub fn var(name: Token, initializer: Option<Expr>) -> Self {
+        Self::Var(StmtVar { name, initializer })
+    }
 }
 
 #[derive(Debug)]
@@ -47,5 +51,5 @@ pub struct StmtPrint {
 #[derive(Debug)]
 pub struct StmtVar {
     pub name: Token,
-    pub initializer: Expr,
+    pub initializer: Option<Expr>,
 }

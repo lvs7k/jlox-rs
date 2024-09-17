@@ -1,6 +1,8 @@
 use std::ops::Deref;
 
-use crate::expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor};
+use crate::expr::{
+    Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable, ExprVisitor,
+};
 
 #[derive(Debug)]
 pub struct AstPrinter;
@@ -43,6 +45,10 @@ impl ExprVisitor<String> for AstPrinter {
 
     fn visit_grouping_expr(&self, expr: &ExprGrouping) -> String {
         self.parenthesize("group", &[&*expr.expression])
+    }
+
+    fn visit_variable_expr(&self, expr: &ExprVariable) -> String {
+        todo!();
     }
 }
 

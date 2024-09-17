@@ -22,7 +22,11 @@ impl Parser {
         let mut statements = Vec::new();
 
         while !self.is_at_end() {
-            statements.push(self.statement()?);
+            match self.declaration() {
+                Ok(Some(stmt)) => statements.push(stmt),
+                Ok(None) => (), // synchronize
+                Err(e) => return Err(e),
+            }
         }
 
         Ok(statements)
@@ -40,6 +44,23 @@ impl Parser {
         self.equality()
     }
 
+    fn declaration(&mut self) -> Result<Option<Stmt>, LoxError> {
+        let res = if self.match_tokentype(&[TokenType::Var]) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        };
+
+        match res {
+            Ok(stmt) => Ok(Some(stmt)),
+            Err(LoxError::ParseError) => {
+                self.synchronize();
+                Ok(None)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     fn statement(&mut self) -> Result<Stmt, LoxError> {
         if self.match_tokentype(&[TokenType::Print]) {
             return self.print_statement();
@@ -51,6 +72,24 @@ impl Parser {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Stmt::print(value))
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
+        let name = self
+            .consume(TokenType::Identifier, "Expect variable name.")?
+            .clone();
+
+        let mut initializer = None;
+        if self.match_tokentype(&[TokenType::Equal]) {
+            initializer = Some(self.expression()?);
+        }
+
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
+
+        Ok(Stmt::var(name, initializer))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
@@ -142,6 +181,11 @@ impl Parser {
 
         if self.match_tokentype(&[Number, String]) {
             return Ok(Expr::literal(self.previous().clone().literal));
+        }
+
+        if self.match_tokentype(&[Identifier]) {
+            let name = self.previous().clone();
+            return Ok(Expr::variable(name));
         }
 
         if self.match_tokentype(&[LeftParen]) {

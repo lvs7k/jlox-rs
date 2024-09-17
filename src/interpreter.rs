@@ -1,6 +1,6 @@
 use crate::{
     error::{self, LoxError},
-    expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor},
+    expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable, ExprVisitor},
     object::Object,
     stmt::{Stmt, StmtExpression, StmtPrint, StmtVar, StmtVisitor},
     token::Token,
@@ -115,6 +115,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_grouping_expr(&self, expr: &ExprGrouping) -> Result<Object, LoxError> {
         self.evaluate(&*expr.expression)
+    }
+
+    fn visit_variable_expr(&self, expr: &ExprVariable) -> Result<Object, LoxError> {
+        todo!();
     }
 }
 
