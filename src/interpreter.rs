@@ -1,7 +1,10 @@
 use crate::{
     environment::Environment,
     error::{self, LoxError},
-    expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable, ExprVisitor},
+    expr::{
+        Expr, ExprAssign, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable,
+        ExprVisitor,
+    },
     object::Object,
     stmt::{Stmt, StmtExpression, StmtPrint, StmtVar, StmtVisitor},
     token::Token,
@@ -34,7 +37,7 @@ impl Interpreter {
         Ok(())
     }
 
-    fn evaluate<E>(&self, expr: E) -> Result<Object, LoxError>
+    fn evaluate<E>(&mut self, expr: E) -> Result<Object, LoxError>
     where
         E: std::ops::Deref<Target = Expr>,
     {
@@ -50,11 +53,11 @@ impl Interpreter {
 }
 
 impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
-    fn visit_literal_expr(&self, expr: &ExprLiteral) -> Result<Object, LoxError> {
+    fn visit_literal_expr(&mut self, expr: &ExprLiteral) -> Result<Object, LoxError> {
         Ok(expr.value.clone())
     }
 
-    fn visit_unary_expr(&self, expr: &ExprUnary) -> Result<Object, LoxError> {
+    fn visit_unary_expr(&mut self, expr: &ExprUnary) -> Result<Object, LoxError> {
         let right = self.evaluate(&*expr.right)?;
 
         match expr.operator.typ {
@@ -67,7 +70,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_binary_expr(&self, expr: &ExprBinary) -> Result<Object, LoxError> {
+    fn visit_binary_expr(&mut self, expr: &ExprBinary) -> Result<Object, LoxError> {
         let left = self.evaluate(&*expr.left)?;
         let right = self.evaluate(&*expr.right)?;
 
@@ -118,13 +121,19 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
     }
 
-    fn visit_grouping_expr(&self, expr: &ExprGrouping) -> Result<Object, LoxError> {
+    fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> Result<Object, LoxError> {
         self.evaluate(&*expr.expression)
     }
 
-    fn visit_variable_expr(&self, expr: &ExprVariable) -> Result<Object, LoxError> {
+    fn visit_variable_expr(&mut self, expr: &ExprVariable) -> Result<Object, LoxError> {
         let value = self.environment.get(&expr.name)?;
         Ok(value.clone())
+    }
+
+    fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<Object, LoxError> {
+        let value = self.evaluate(&*expr.value)?;
+        self.environment.assign(&expr.name, value.clone())?;
+        Ok(value)
     }
 }
 

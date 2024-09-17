@@ -8,11 +8,11 @@ use crate::expr::{
 pub struct AstPrinter;
 
 impl AstPrinter {
-    pub fn print(&self, expr: &Expr) -> String {
+    pub fn print(&mut self, expr: &Expr) -> String {
         expr.accept(self)
     }
 
-    fn parenthesize<E>(&self, name: &str, exprs: &[E]) -> String
+    fn parenthesize<E>(&mut self, name: &str, exprs: &[E]) -> String
     where
         E: Deref<Target = Expr>,
     {
@@ -31,24 +31,28 @@ impl AstPrinter {
 }
 
 impl ExprVisitor<String> for AstPrinter {
-    fn visit_literal_expr(&self, expr: &ExprLiteral) -> String {
+    fn visit_literal_expr(&mut self, expr: &ExprLiteral) -> String {
         expr.value.to_string()
     }
 
-    fn visit_unary_expr(&self, expr: &ExprUnary) -> String {
+    fn visit_unary_expr(&mut self, expr: &ExprUnary) -> String {
         self.parenthesize(&expr.operator.lexeme, &[&*expr.right])
     }
 
-    fn visit_binary_expr(&self, expr: &ExprBinary) -> String {
+    fn visit_binary_expr(&mut self, expr: &ExprBinary) -> String {
         self.parenthesize(&expr.operator.lexeme, &[&*expr.left, &*expr.right])
     }
 
-    fn visit_grouping_expr(&self, expr: &ExprGrouping) -> String {
+    fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> String {
         self.parenthesize("group", &[&*expr.expression])
     }
 
-    fn visit_variable_expr(&self, expr: &ExprVariable) -> String {
-        todo!();
+    fn visit_variable_expr(&mut self, expr: &ExprVariable) -> String {
+        unimplemented!();
+    }
+
+    fn visit_assign_expr(&mut self, expr: &crate::expr::ExprAssign) -> String {
+        unimplemented!();
     }
 }
 

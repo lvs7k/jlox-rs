@@ -1,15 +1,15 @@
 use crate::{object::Object, token::Token};
 
 pub trait ExprVisitor<R> {
-    fn visit_literal_expr(&self, expr: &ExprLiteral) -> R;
-    fn visit_unary_expr(&self, expr: &ExprUnary) -> R;
-    fn visit_binary_expr(&self, expr: &ExprBinary) -> R;
-    fn visit_grouping_expr(&self, expr: &ExprGrouping) -> R;
-    fn visit_variable_expr(&self, expr: &ExprVariable) -> R;
-    fn visit_assign_expr(&self, expr: &ExprAssign) -> R;
+    fn visit_literal_expr(&mut self, expr: &ExprLiteral) -> R;
+    fn visit_unary_expr(&mut self, expr: &ExprUnary) -> R;
+    fn visit_binary_expr(&mut self, expr: &ExprBinary) -> R;
+    fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> R;
+    fn visit_variable_expr(&mut self, expr: &ExprVariable) -> R;
+    fn visit_assign_expr(&mut self, expr: &ExprAssign) -> R;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Literal(ExprLiteral),
     Unary(ExprUnary),
@@ -20,7 +20,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn accept<V, R>(&self, visitor: &V) -> R
+    pub fn accept<V, R>(&self, visitor: &mut V) -> R
     where
         V: ExprVisitor<R>,
     {
@@ -71,35 +71,35 @@ impl Expr {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprLiteral {
     pub value: Object,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprUnary {
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprBinary {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprGrouping {
     pub expression: Box<Expr>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprVariable {
     pub name: Token,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExprAssign {
     pub name: Token,
     pub value: Box<Expr>,

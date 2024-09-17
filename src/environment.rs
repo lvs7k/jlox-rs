@@ -24,6 +24,18 @@ impl Environment {
         }
     }
 
+    pub fn assign(&mut self, name: &Token, value: Object) -> Result<(), LoxError> {
+        if self.values.contains_key(&name.lexeme) {
+            self.values.insert(name.lexeme.to_string(), value);
+            return Ok(());
+        }
+
+        Err(LoxError::RuntimeError(
+            name.clone(),
+            format!("Undefined variable '{}'.", name.lexeme),
+        ))
+    }
+
     pub fn define(&mut self, name: String, value: Object) {
         self.values.insert(name, value);
     }
