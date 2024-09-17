@@ -4,6 +4,7 @@ pub mod parser;
 pub mod scanner;
 
 mod ast_printer;
+mod environment;
 mod expr;
 mod object;
 mod stmt;
