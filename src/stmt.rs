@@ -1,14 +1,16 @@
-use crate::expr::Expr;
+use crate::{expr::Expr, token::Token};
 
 pub trait StmtVisitor<R> {
     fn visit_expression_stmt(&self, stmt: &StmtExpression) -> R;
     fn visit_print_stmt(&self, stmt: &StmtPrint) -> R;
+    fn visit_var_stmt(&self, stmt: &StmtVar) -> R;
 }
 
 #[derive(Debug)]
 pub enum Stmt {
     Expression(StmtExpression),
     Print(StmtPrint),
+    Var(StmtVar),
 }
 
 impl Stmt {
@@ -19,6 +21,7 @@ impl Stmt {
         match *self {
             Stmt::Expression(ref stmt) => visitor.visit_expression_stmt(stmt),
             Stmt::Print(ref stmt) => visitor.visit_print_stmt(stmt),
+            Stmt::Var(ref stmt) => visitor.visit_var_stmt(stmt),
         }
     }
 
@@ -39,4 +42,10 @@ pub struct StmtExpression {
 #[derive(Debug)]
 pub struct StmtPrint {
     pub expression: Expr,
+}
+
+#[derive(Debug)]
+pub struct StmtVar {
+    pub name: Token,
+    pub initializer: Expr,
 }

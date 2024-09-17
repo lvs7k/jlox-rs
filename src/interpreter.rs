@@ -2,7 +2,7 @@ use crate::{
     error::{self, LoxError},
     expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVisitor},
     object::Object,
-    stmt::{Stmt, StmtExpression, StmtPrint, StmtVisitor},
+    stmt::{Stmt, StmtExpression, StmtPrint, StmtVar, StmtVisitor},
     token::Token,
     token_type::TokenType,
 };
@@ -150,6 +150,10 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
         let value = self.evaluate(&stmt.expression)?;
         println!("{}", value);
         Ok(())
+    }
+
+    fn visit_var_stmt(&self, stmt: &StmtVar) -> Result<(), LoxError> {
+        todo!();
     }
 }
 
