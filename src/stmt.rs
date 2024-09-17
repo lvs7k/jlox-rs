@@ -1,9 +1,9 @@
 use crate::{expr::Expr, token::Token};
 
 pub trait StmtVisitor<R> {
-    fn visit_expression_stmt(&self, stmt: &StmtExpression) -> R;
-    fn visit_print_stmt(&self, stmt: &StmtPrint) -> R;
-    fn visit_var_stmt(&self, stmt: &StmtVar) -> R;
+    fn visit_expression_stmt(&mut self, stmt: &StmtExpression) -> R;
+    fn visit_print_stmt(&mut self, stmt: &StmtPrint) -> R;
+    fn visit_var_stmt(&mut self, stmt: &StmtVar) -> R;
 }
 
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn accept<V, R>(&self, visitor: &V) -> R
+    pub fn accept<V, R>(&self, visitor: &mut V) -> R
     where
         V: StmtVisitor<R>,
     {

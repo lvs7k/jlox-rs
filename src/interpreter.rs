@@ -1,4 +1,5 @@
 use crate::{
+    environment::Environment,
     error::{self, LoxError},
     expr::{Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable, ExprVisitor},
     object::Object,
@@ -8,14 +9,18 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Interpreter {}
+pub struct Interpreter {
+    pub environment: Environment,
+}
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            environment: Environment::new(),
+        }
     }
 
-    pub fn interpret(&self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), LoxError> {
         for statement in statements {
             match self.execute(statement) {
                 Err(LoxError::RuntimeError(token, message)) => {
@@ -36,7 +41,7 @@ impl Interpreter {
         expr.accept(self)
     }
 
-    fn execute<S>(&self, stmt: S) -> Result<(), LoxError>
+    fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>
     where
         S: std::ops::Deref<Target = Stmt>,
     {
@@ -118,7 +123,8 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_variable_expr(&self, expr: &ExprVariable) -> Result<Object, LoxError> {
-        todo!();
+        let value = self.environment.get(&expr.name)?;
+        Ok(value.clone())
     }
 }
 
@@ -145,19 +151,25 @@ fn check_number_operands(operator: &Token, left: &Object, right: &Object) -> Res
 }
 
 impl StmtVisitor<Result<(), LoxError>> for Interpreter {
-    fn visit_expression_stmt(&self, stmt: &StmtExpression) -> Result<(), LoxError> {
+    fn visit_expression_stmt(&mut self, stmt: &StmtExpression) -> Result<(), LoxError> {
         self.evaluate(&stmt.expression)?;
         Ok(())
     }
 
-    fn visit_print_stmt(&self, stmt: &StmtPrint) -> Result<(), LoxError> {
+    fn visit_print_stmt(&mut self, stmt: &StmtPrint) -> Result<(), LoxError> {
         let value = self.evaluate(&stmt.expression)?;
         println!("{}", value);
         Ok(())
     }
 
-    fn visit_var_stmt(&self, stmt: &StmtVar) -> Result<(), LoxError> {
-        todo!();
+    fn visit_var_stmt(&mut self, stmt: &StmtVar) -> Result<(), LoxError> {
+        let mut value = Object::Null;
+        if let Some(ref initializer) = stmt.initializer {
+            value = self.evaluate(initializer)?;
+        }
+
+        self.environment.define(stmt.name.lexeme.to_string(), value);
+        Ok(())
     }
 }
 
