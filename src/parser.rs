@@ -40,10 +40,6 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> Result<Expr, LoxError> {
-        self.equality()
-    }
-
     fn declaration(&mut self) -> Result<Option<Stmt>, LoxError> {
         let res = if self.match_tokentype(&[TokenType::Var]) {
             self.var_declaration()
@@ -96,6 +92,31 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         Ok(Stmt::expression(expr))
+    }
+
+    fn expression(&mut self) -> Result<Expr, LoxError> {
+        self.assignment()
+    }
+
+    fn assignment(&mut self) -> Result<Expr, LoxError> {
+        let expr = self.equality()?;
+
+        if self.match_tokentype(&[TokenType::Equal]) {
+            let equals = self.previous().clone();
+            let value = self.assignment()?;
+
+            if let Expr::Variable(var) = expr {
+                let name = var.name;
+                return Ok(Expr::assign(name, value));
+            }
+
+            error::lox_error_token(&equals, "Invalid assignment target.");
+            // 8.4.1 Assignment syntax
+            // [!WARNING] Original implementation doesn't throw error here.
+            return Err(LoxError::ParseError);
+        }
+
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, LoxError> {

@@ -6,6 +6,7 @@ pub trait ExprVisitor<R> {
     fn visit_binary_expr(&self, expr: &ExprBinary) -> R;
     fn visit_grouping_expr(&self, expr: &ExprGrouping) -> R;
     fn visit_variable_expr(&self, expr: &ExprVariable) -> R;
+    fn visit_assign_expr(&self, expr: &ExprAssign) -> R;
 }
 
 #[derive(Debug, PartialEq)]
@@ -15,6 +16,7 @@ pub enum Expr {
     Binary(ExprBinary),
     Grouping(ExprGrouping),
     Variable(ExprVariable),
+    Assign(ExprAssign),
 }
 
 impl Expr {
@@ -28,6 +30,7 @@ impl Expr {
             Expr::Binary(ref expr) => visitor.visit_binary_expr(expr),
             Expr::Grouping(ref expr) => visitor.visit_grouping_expr(expr),
             Expr::Variable(ref expr) => visitor.visit_variable_expr(expr),
+            Expr::Assign(ref expr) => visitor.visit_assign_expr(expr),
         }
     }
 
@@ -59,6 +62,13 @@ impl Expr {
     pub fn variable(name: Token) -> Self {
         Self::Variable(ExprVariable { name })
     }
+
+    pub fn assign(name: Token, value: Expr) -> Self {
+        Self::Assign(ExprAssign {
+            name,
+            value: Box::new(value),
+        })
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -87,4 +97,10 @@ pub struct ExprGrouping {
 #[derive(Debug, PartialEq)]
 pub struct ExprVariable {
     pub name: Token,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ExprAssign {
+    pub name: Token,
+    pub value: Box<Expr>,
 }
