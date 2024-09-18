@@ -12,14 +12,14 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Interpreter {
-    pub environment: Environment,
+pub struct Interpreter<'a> {
+    pub environment: Environment<'a>,
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
     pub fn new() -> Self {
         Self {
-            environment: Environment::new(),
+            environment: Environment::new(None),
         }
     }
 
@@ -52,7 +52,7 @@ impl Interpreter {
     }
 }
 
-impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
+impl<'a> ExprVisitor<Result<Object, LoxError>> for Interpreter<'a> {
     fn visit_literal_expr(&mut self, expr: &ExprLiteral) -> Result<Object, LoxError> {
         Ok(expr.value.clone())
     }
@@ -159,7 +159,7 @@ fn check_number_operands(operator: &Token, left: &Object, right: &Object) -> Res
     ))
 }
 
-impl StmtVisitor<Result<(), LoxError>> for Interpreter {
+impl<'a> StmtVisitor<Result<(), LoxError>> for Interpreter<'a> {
     fn visit_expression_stmt(&mut self, stmt: &StmtExpression) -> Result<(), LoxError> {
         self.evaluate(&stmt.expression)?;
         Ok(())
