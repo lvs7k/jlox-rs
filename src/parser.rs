@@ -136,7 +136,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, LoxError> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
 
         if self.match_tokentype(&[TokenType::Equal]) {
             let equals = self.previous().clone();
@@ -144,13 +144,37 @@ impl Parser {
 
             if let Expr::Variable(var) = expr {
                 let name = var.name;
-                return Ok(Expr::assign(name, value));
+                return Ok(Expr::new_assign(name, value));
             }
 
             error::lox_error_token(&equals, "Invalid assignment target.");
             // 8.4.1 Assignment syntax
             // [!WARNING] Original implementation doesn't throw error here.
             return Err(LoxError::ParseError);
+        }
+
+        Ok(expr)
+    }
+
+    fn or(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.and()?;
+
+        while self.match_tokentype(&[TokenType::Or]) {
+            let operator = self.previous().clone();
+            let right = self.and()?;
+            expr = Expr::new_logical(expr, operator, right);
+        }
+
+        Ok(expr)
+    }
+
+    fn and(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.equality()?;
+
+        while self.match_tokentype(&[TokenType::And]) {
+            let operator = self.previous().clone();
+            let right = self.equality()?;
+            expr = Expr::new_logical(expr, operator, right);
         }
 
         Ok(expr)
@@ -164,7 +188,7 @@ impl Parser {
         while self.match_tokentype(&[BangEqual, EqualEqual]) {
             let operator = self.previous().clone();
             let right = self.comparison()?;
-            expr = Expr::binary(expr, operator, right);
+            expr = Expr::new_binary(expr, operator, right);
         }
 
         Ok(expr)
@@ -178,7 +202,7 @@ impl Parser {
         while self.match_tokentype(&[Greater, GreaterEqual, Less, LessEqual]) {
             let operator = self.previous().clone();
             let right = self.term()?;
-            expr = Expr::binary(expr, operator, right);
+            expr = Expr::new_binary(expr, operator, right);
         }
 
         Ok(expr)
@@ -192,7 +216,7 @@ impl Parser {
         while self.match_tokentype(&[Minus, Plus]) {
             let operator = self.previous().clone();
             let right = self.factor()?;
-            expr = Expr::binary(expr, operator, right);
+            expr = Expr::new_binary(expr, operator, right);
         }
 
         Ok(expr)
@@ -206,7 +230,7 @@ impl Parser {
         while self.match_tokentype(&[Slash, Star]) {
             let operator = self.previous().clone();
             let right = self.unary()?;
-            expr = Expr::binary(expr, operator, right);
+            expr = Expr::new_binary(expr, operator, right);
         }
 
         Ok(expr)
@@ -218,7 +242,7 @@ impl Parser {
         if self.match_tokentype(&[Bang, Minus]) {
             let operator = self.previous().clone();
             let right = self.unary()?;
-            return Ok(Expr::unary(operator, right));
+            return Ok(Expr::new_unary(operator, right));
         }
 
         self.primary()
@@ -228,28 +252,28 @@ impl Parser {
         use TokenType::*;
 
         if self.match_tokentype(&[False]) {
-            return Ok(Expr::literal(Object::Bool(false)));
+            return Ok(Expr::new_literal(Object::Bool(false)));
         }
         if self.match_tokentype(&[True]) {
-            return Ok(Expr::literal(Object::Bool(true)));
+            return Ok(Expr::new_literal(Object::Bool(true)));
         }
         if self.match_tokentype(&[Nil]) {
-            return Ok(Expr::literal(Object::Null));
+            return Ok(Expr::new_literal(Object::Null));
         }
 
         if self.match_tokentype(&[Number, String]) {
-            return Ok(Expr::literal(self.previous().clone().literal));
+            return Ok(Expr::new_literal(self.previous().clone().literal));
         }
 
         if self.match_tokentype(&[Identifier]) {
             let name = self.previous().clone();
-            return Ok(Expr::variable(name));
+            return Ok(Expr::new_variable(name));
         }
 
         if self.match_tokentype(&[LeftParen]) {
             let expr = self.expression()?;
             self.consume(RightParen, "Expect ')' after expression.")?;
-            return Ok(Expr::grouping(expr));
+            return Ok(Expr::new_grouping(expr));
         }
 
         Err(self.error(self.peek(), "Expect expression."))
@@ -342,31 +366,34 @@ mod test {
     fn parse_primary() {
         assert_eq!(
             parse_source("true").unwrap(),
-            Expr::literal(Object::Bool(true))
+            Expr::new_literal(Object::Bool(true))
         );
         assert_eq!(
             parse_source("false").unwrap(),
-            Expr::literal(Object::Bool(false))
+            Expr::new_literal(Object::Bool(false))
         );
-        assert_eq!(parse_source("nil").unwrap(), Expr::literal(Object::Null));
+        assert_eq!(
+            parse_source("nil").unwrap(),
+            Expr::new_literal(Object::Null)
+        );
         assert_eq!(
             parse_source("123.456").unwrap(),
-            Expr::literal(Object::Num(123.456))
+            Expr::new_literal(Object::Num(123.456))
         );
         assert_eq!(
             parse_source("\"hello, world\"").unwrap(),
-            Expr::literal(Object::Str("hello, world".to_string()))
+            Expr::new_literal(Object::Str("hello, world".to_string()))
         );
         assert_eq!(
             parse_source("(1 + 2) * 3").unwrap(),
-            Expr::binary(
-                Expr::grouping(Expr::binary(
-                    Expr::literal(Object::Num(1f64)),
+            Expr::new_binary(
+                Expr::new_grouping(Expr::new_binary(
+                    Expr::new_literal(Object::Num(1f64)),
                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
-                    Expr::literal(Object::Num(2f64))
+                    Expr::new_literal(Object::Num(2f64))
                 )),
                 Token::new(TokenType::Star, "*".into(), Object::Null, 1),
-                Expr::literal(Object::Num(3f64))
+                Expr::new_literal(Object::Num(3f64))
             )
         );
     }
@@ -375,25 +402,25 @@ mod test {
     fn parse_unary() {
         assert_eq!(
             parse_source("-123.456").unwrap(),
-            Expr::unary(
+            Expr::new_unary(
                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
-                Expr::literal(Object::Num(123.456))
+                Expr::new_literal(Object::Num(123.456))
             )
         );
         assert_eq!(
             parse_source("!false").unwrap(),
-            Expr::unary(
+            Expr::new_unary(
                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                Expr::literal(Object::Bool(false))
+                Expr::new_literal(Object::Bool(false))
             )
         );
         assert_eq!(
             parse_source("!!true").unwrap(),
-            Expr::unary(
+            Expr::new_unary(
                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                Expr::unary(
+                Expr::new_unary(
                     Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                    Expr::literal(Object::Bool(true))
+                    Expr::new_literal(Object::Bool(true))
                 )
             )
         );
@@ -403,14 +430,14 @@ mod test {
     fn parse_factor() {
         assert_eq!(
             parse_source("123 * 456 / 789").unwrap(),
-            Expr::binary(
-                Expr::binary(
-                    Expr::literal(Object::Num(123f64)),
+            Expr::new_binary(
+                Expr::new_binary(
+                    Expr::new_literal(Object::Num(123f64)),
                     Token::new(TokenType::Star, "*".into(), Object::Null, 1),
-                    Expr::literal(Object::Num(456f64)),
+                    Expr::new_literal(Object::Num(456f64)),
                 ),
                 Token::new(TokenType::Slash, "/".into(), Object::Null, 1),
-                Expr::literal(Object::Num(789f64))
+                Expr::new_literal(Object::Num(789f64))
             )
         )
     }
@@ -419,14 +446,14 @@ mod test {
     fn parse_term() {
         assert_eq!(
             parse_source("123 + 456 - 789").unwrap(),
-            Expr::binary(
-                Expr::binary(
-                    Expr::literal(Object::Num(123f64)),
+            Expr::new_binary(
+                Expr::new_binary(
+                    Expr::new_literal(Object::Num(123f64)),
                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
-                    Expr::literal(Object::Num(456f64)),
+                    Expr::new_literal(Object::Num(456f64)),
                 ),
                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
-                Expr::literal(Object::Num(789f64))
+                Expr::new_literal(Object::Num(789f64))
             )
         )
     }
@@ -435,14 +462,14 @@ mod test {
     fn parse_comparison() {
         assert_eq!(
             parse_source("123 >= 456 < 789").unwrap(),
-            Expr::binary(
-                Expr::binary(
-                    Expr::literal(Object::Num(123f64)),
+            Expr::new_binary(
+                Expr::new_binary(
+                    Expr::new_literal(Object::Num(123f64)),
                     Token::new(TokenType::GreaterEqual, ">=".into(), Object::Null, 1),
-                    Expr::literal(Object::Num(456f64)),
+                    Expr::new_literal(Object::Num(456f64)),
                 ),
                 Token::new(TokenType::Less, "<".into(), Object::Null, 1),
-                Expr::literal(Object::Num(789f64))
+                Expr::new_literal(Object::Num(789f64))
             )
         )
     }
@@ -451,14 +478,14 @@ mod test {
     fn parse_equality() {
         assert_eq!(
             parse_source("123 != 456 == 789").unwrap(),
-            Expr::binary(
-                Expr::binary(
-                    Expr::literal(Object::Num(123f64)),
+            Expr::new_binary(
+                Expr::new_binary(
+                    Expr::new_literal(Object::Num(123f64)),
                     Token::new(TokenType::BangEqual, "!=".into(), Object::Null, 1),
-                    Expr::literal(Object::Num(456f64)),
+                    Expr::new_literal(Object::Num(456f64)),
                 ),
                 Token::new(TokenType::EqualEqual, "==".into(), Object::Null, 1),
-                Expr::literal(Object::Num(789f64))
+                Expr::new_literal(Object::Num(789f64))
             )
         )
     }

@@ -7,6 +7,7 @@ pub trait ExprVisitor<R> {
     fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> R;
     fn visit_variable_expr(&mut self, expr: &ExprVariable) -> R;
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> R;
+    fn visit_logical_expr(&mut self, expr: &ExprLogical) -> R;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,10 +18,11 @@ pub enum Expr {
     Grouping(ExprGrouping),
     Variable(ExprVariable),
     Assign(ExprAssign),
+    Logical(ExprLogical),
 }
 
 impl Expr {
-    pub fn accept<V, R>(&self, visitor: &mut V) -> R
+    pub fn new_accept<V, R>(&self, visitor: &mut V) -> R
     where
         V: ExprVisitor<R>,
     {
@@ -31,21 +33,22 @@ impl Expr {
             Expr::Grouping(ref expr) => visitor.visit_grouping_expr(expr),
             Expr::Variable(ref expr) => visitor.visit_variable_expr(expr),
             Expr::Assign(ref expr) => visitor.visit_assign_expr(expr),
+            Expr::Logical(ref expr) => visitor.visit_logical_expr(expr),
         }
     }
 
-    pub fn literal(value: Object) -> Self {
+    pub fn new_literal(value: Object) -> Self {
         Self::Literal(ExprLiteral { value })
     }
 
-    pub fn unary(operator: Token, right: Expr) -> Self {
+    pub fn new_unary(operator: Token, right: Expr) -> Self {
         Self::Unary(ExprUnary {
             operator,
             right: Box::new(right),
         })
     }
 
-    pub fn binary(left: Expr, operator: Token, right: Expr) -> Self {
+    pub fn new_binary(left: Expr, operator: Token, right: Expr) -> Self {
         Self::Binary(ExprBinary {
             left: Box::new(left),
             operator,
@@ -53,20 +56,28 @@ impl Expr {
         })
     }
 
-    pub fn grouping(expression: Expr) -> Self {
+    pub fn new_grouping(expression: Expr) -> Self {
         Self::Grouping(ExprGrouping {
             expression: Box::new(expression),
         })
     }
 
-    pub fn variable(name: Token) -> Self {
+    pub fn new_variable(name: Token) -> Self {
         Self::Variable(ExprVariable { name })
     }
 
-    pub fn assign(name: Token, value: Expr) -> Self {
+    pub fn new_assign(name: Token, value: Expr) -> Self {
         Self::Assign(ExprAssign {
             name,
             value: Box::new(value),
+        })
+    }
+
+    pub fn new_logical(left: Expr, operator: Token, right: Expr) -> Self {
+        Self::Logical(ExprLogical {
+            left: Box::new(left),
+            operator,
+            right: Box::new(right),
         })
     }
 }
@@ -103,4 +114,11 @@ pub struct ExprVariable {
 pub struct ExprAssign {
     pub name: Token,
     pub value: Box<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExprLogical {
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }

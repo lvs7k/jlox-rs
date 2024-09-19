@@ -7,7 +7,7 @@ pub struct AstPrinter;
 
 impl AstPrinter {
     pub fn print(&mut self, expr: &Expr) -> String {
-        expr.accept(self)
+        expr.new_accept(self)
     }
 
     fn parenthesize<E>(&mut self, name: &str, exprs: &[E]) -> String
@@ -20,7 +20,7 @@ impl AstPrinter {
         builder.push_str(name);
         for expr in exprs {
             builder.push(' ');
-            builder.push_str(&expr.accept(self));
+            builder.push_str(&expr.new_accept(self));
         }
         builder.push(')');
 
@@ -52,6 +52,10 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> String {
         unimplemented!();
     }
+
+    fn visit_logical_expr(&mut self, expr: &ExprLogical) -> String {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]
@@ -62,14 +66,14 @@ mod test {
 
     #[test]
     fn astprinter_books_example() {
-        let left = Expr::unary(
+        let left = Expr::new_unary(
             Token::new(Minus, "-".into(), Object::Null, 1),
-            Expr::literal(Object::Num(123f64)),
+            Expr::new_literal(Object::Num(123f64)),
         );
         let op = Token::new(Star, "*".into(), Object::Null, 1);
-        let right = Expr::grouping(Expr::literal(Object::Num(45.67f64)));
+        let right = Expr::new_grouping(Expr::new_literal(Object::Num(45.67f64)));
 
-        let expression = Expr::binary(left, op, right);
+        let expression = Expr::new_binary(left, op, right);
 
         assert_eq!(
             "(* (- 123) (group 45.67))".to_string(),

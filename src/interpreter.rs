@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     environment::Environment,
@@ -40,7 +40,7 @@ impl Interpreter {
     where
         E: std::ops::Deref<Target = Expr>,
     {
-        expr.accept(self)
+        expr.new_accept(self)
     }
 
     fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>
@@ -164,6 +164,20 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             .borrow_mut()
             .assign(&expr.name, value.clone())?;
         Ok(value)
+    }
+
+    fn visit_logical_expr(&mut self, expr: &ExprLogical) -> Result<Object, LoxError> {
+        let left = self.evaluate(&*expr.left)?;
+
+        if expr.operator.typ == TokenType::Or {
+            if left.is_truthy() {
+                return Ok(left);
+            }
+        } else if !left.is_truthy() {
+            return Ok(left);
+        }
+
+        self.evaluate(&*expr.right)
     }
 }
 
