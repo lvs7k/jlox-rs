@@ -5,6 +5,7 @@ pub trait StmtVisitor<R> {
     fn visit_print_stmt(&mut self, stmt: &StmtPrint) -> R;
     fn visit_var_stmt(&mut self, stmt: &StmtVar) -> R;
     fn visit_block_stmt(&mut self, stmt: &StmtBlock) -> R;
+    fn visit_if_stmt(&mut self, stmt: &StmtIf) -> R;
 }
 
 #[derive(Debug)]
@@ -13,6 +14,7 @@ pub enum Stmt {
     Print(StmtPrint),
     Var(StmtVar),
     Block(StmtBlock),
+    If(StmtIf),
 }
 
 impl Stmt {
@@ -25,23 +27,32 @@ impl Stmt {
             Stmt::Print(ref stmt) => visitor.visit_print_stmt(stmt),
             Stmt::Var(ref stmt) => visitor.visit_var_stmt(stmt),
             Stmt::Block(ref stmt) => visitor.visit_block_stmt(stmt),
+            Stmt::If(ref stmt) => visitor.visit_if_stmt(stmt),
         }
     }
 
-    pub fn expression(expression: Expr) -> Self {
+    pub fn new_expression(expression: Expr) -> Self {
         Self::Expression(StmtExpression { expression })
     }
 
-    pub fn print(expression: Expr) -> Self {
+    pub fn new_print(expression: Expr) -> Self {
         Self::Print(StmtPrint { expression })
     }
 
-    pub fn var(name: Token, initializer: Option<Expr>) -> Self {
+    pub fn new_var(name: Token, initializer: Option<Expr>) -> Self {
         Self::Var(StmtVar { name, initializer })
     }
 
-    pub fn block(statements: Vec<Stmt>) -> Self {
+    pub fn new_block(statements: Vec<Stmt>) -> Self {
         Self::Block(StmtBlock { statements })
+    }
+
+    pub fn new_if(condition: Expr, then_branch: Box<Stmt>, else_branch: Option<Box<Stmt>>) -> Self {
+        Self::If(StmtIf {
+            condition,
+            then_branch,
+            else_branch,
+        })
     }
 }
 
@@ -64,4 +75,11 @@ pub struct StmtVar {
 #[derive(Debug)]
 pub struct StmtBlock {
     pub statements: Vec<Stmt>,
+}
+
+#[derive(Debug)]
+pub struct StmtIf {
+    pub condition: Expr,
+    pub then_branch: Box<Stmt>,
+    pub else_branch: Option<Box<Stmt>>,
 }

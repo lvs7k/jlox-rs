@@ -33,6 +33,7 @@ impl Parser {
     }
 
     // before 8.1.2 Parsing statements
+    #[allow(dead_code)]
     pub(crate) fn parse_one_expr(&mut self) -> Result<Expr, LoxError> {
         match self.expression() {
             Ok(expr) => Ok(expr),
@@ -58,21 +59,38 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_tokentype(&[TokenType::If]) {
+            return self.if_statement();
+        }
         if self.match_tokentype(&[TokenType::Print]) {
             return self.print_statement();
         }
         if self.match_tokentype(&[TokenType::LeftBrace]) {
             let statements = self.block()?;
-            return Ok(Stmt::block(statements));
+            return Ok(Stmt::new_block(statements));
         }
 
         self.expression_statement()
     }
 
+    fn if_statement(&mut self) -> Result<Stmt, LoxError> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
+
+        let then_branch = Box::new(self.statement()?);
+        let mut else_branch = None;
+        if self.match_tokentype(&[TokenType::Else]) {
+            else_branch = Some(Box::new(self.statement()?));
+        }
+
+        Ok(Stmt::new_if(condition, then_branch, else_branch))
+    }
+
     fn print_statement(&mut self) -> Result<Stmt, LoxError> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
-        Ok(Stmt::print(value))
+        Ok(Stmt::new_print(value))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
@@ -90,13 +108,13 @@ impl Parser {
             "Expect ';' after variable declaration.",
         )?;
 
-        Ok(Stmt::var(name, initializer))
+        Ok(Stmt::new_var(name, initializer))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
-        Ok(Stmt::expression(expr))
+        Ok(Stmt::new_expression(expr))
     }
 
     fn block(&mut self) -> Result<Vec<Stmt>, LoxError> {

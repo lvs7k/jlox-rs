@@ -1,7 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 use crate::{
-    environment::{self, Environment},
+    environment::Environment,
     error::{self, LoxError},
     expr::*,
     object::Object,
@@ -70,6 +70,12 @@ impl Interpreter {
         self.environment = previous;
 
         Ok(())
+    }
+}
+
+impl Default for Interpreter {
+    fn default() -> Self {
+        Interpreter::new()
     }
 }
 
@@ -213,6 +219,16 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             self.environment.clone(),
         ))));
         self.execute_block(&stmt.statements, environment)?;
+        Ok(())
+    }
+
+    fn visit_if_stmt(&mut self, stmt: &StmtIf) -> Result<(), LoxError> {
+        if self.evaluate(&stmt.condition)?.is_truthy() {
+            self.execute(&*stmt.then_branch)?;
+        } else if let Some(ref else_branch) = stmt.else_branch {
+            self.execute(&**else_branch)?;
+        }
+
         Ok(())
     }
 }
