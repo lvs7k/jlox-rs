@@ -1,8 +1,6 @@
 use std::ops::Deref;
 
-use crate::expr::{
-    Expr, ExprBinary, ExprGrouping, ExprLiteral, ExprUnary, ExprVariable, ExprVisitor,
-};
+use crate::expr::*;
 
 #[derive(Debug)]
 pub struct AstPrinter;
@@ -51,7 +49,7 @@ impl ExprVisitor<String> for AstPrinter {
         unimplemented!();
     }
 
-    fn visit_assign_expr(&mut self, expr: &crate::expr::ExprAssign) -> String {
+    fn visit_assign_expr(&mut self, expr: &ExprAssign) -> String {
         unimplemented!();
     }
 }
