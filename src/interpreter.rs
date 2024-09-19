@@ -206,12 +206,14 @@ fn check_number_operands(operator: &Token, left: &Object, right: &Object) -> Res
 impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     fn visit_expression_stmt(&mut self, stmt: &StmtExpression) -> Result<(), LoxError> {
         self.evaluate(&stmt.expression)?;
+
         Ok(())
     }
 
     fn visit_print_stmt(&mut self, stmt: &StmtPrint) -> Result<(), LoxError> {
         let value = self.evaluate(&stmt.expression)?;
         println!("{}", value);
+
         Ok(())
     }
 
@@ -225,6 +227,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             .as_ref()
             .borrow_mut()
             .define(stmt.name.lexeme.to_string(), value);
+
         Ok(())
     }
 
@@ -233,6 +236,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             self.environment.clone(),
         ))));
         self.execute_block(&stmt.statements, environment)?;
+
         Ok(())
     }
 
@@ -241,6 +245,14 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             self.execute(&*stmt.then_branch)?;
         } else if let Some(ref else_branch) = stmt.else_branch {
             self.execute(&**else_branch)?;
+        }
+
+        Ok(())
+    }
+
+    fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> Result<(), LoxError> {
+        while self.evaluate(&stmt.condition)?.is_truthy() {
+            self.execute(&*stmt.body)?;
         }
 
         Ok(())

@@ -6,6 +6,7 @@ pub trait StmtVisitor<R> {
     fn visit_var_stmt(&mut self, stmt: &StmtVar) -> R;
     fn visit_block_stmt(&mut self, stmt: &StmtBlock) -> R;
     fn visit_if_stmt(&mut self, stmt: &StmtIf) -> R;
+    fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> R;
 }
 
 #[derive(Debug)]
@@ -15,6 +16,7 @@ pub enum Stmt {
     Var(StmtVar),
     Block(StmtBlock),
     If(StmtIf),
+    While(StmtWhile),
 }
 
 impl Stmt {
@@ -22,12 +24,13 @@ impl Stmt {
     where
         V: StmtVisitor<R>,
     {
-        match *self {
+        match self {
             Stmt::Expression(ref stmt) => visitor.visit_expression_stmt(stmt),
             Stmt::Print(ref stmt) => visitor.visit_print_stmt(stmt),
             Stmt::Var(ref stmt) => visitor.visit_var_stmt(stmt),
             Stmt::Block(ref stmt) => visitor.visit_block_stmt(stmt),
             Stmt::If(ref stmt) => visitor.visit_if_stmt(stmt),
+            Stmt::While(ref stmt) => visitor.visit_while_stmt(stmt),
         }
     }
 
@@ -53,6 +56,10 @@ impl Stmt {
             then_branch,
             else_branch,
         })
+    }
+
+    pub fn new_while(condition: Expr, body: Box<Stmt>) -> Self {
+        Self::While(StmtWhile { condition, body })
     }
 }
 
@@ -82,4 +89,10 @@ pub struct StmtIf {
     pub condition: Expr,
     pub then_branch: Box<Stmt>,
     pub else_branch: Option<Box<Stmt>>,
+}
+
+#[derive(Debug)]
+pub struct StmtWhile {
+    pub condition: Expr,
+    pub body: Box<Stmt>,
 }
