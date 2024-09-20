@@ -55,7 +55,9 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Option<Stmt>, LoxError> {
-        let res = if self.match_tokentype(&[TokenType::Var]) {
+        let res = if self.match_tokentype(&[TokenType::Fun]) {
+            self.function("function")
+        } else if self.match_tokentype(&[TokenType::Var]) {
             self.var_declaration()
         } else {
             self.statement()
@@ -161,6 +163,50 @@ impl Parser {
         let body = Box::new(self.statement()?);
 
         Ok(Stmt::new_while(condition, body))
+    }
+
+    fn function(&mut self, kind: &str) -> Result<Stmt, LoxError> {
+        let name = self
+            .consume(TokenType::Identifier, &format!("Expect {} name.", kind))?
+            .clone();
+
+        self.consume(
+            TokenType::LeftParen,
+            &format!("Expect '(' after {} name.", kind),
+        )?;
+
+        let mut parameters = vec![];
+
+        if !self.check(TokenType::RightParen) {
+            // Do-While loop
+            loop {
+                if parameters.len() >= 255 {
+                    error::lox_error_token(self.peek(), "Can't have more than 255 parameters.");
+                    self.had_error.set(true);
+                }
+
+                let ident = self
+                    .consume(TokenType::Identifier, "Expect parameter name.")?
+                    .clone();
+
+                parameters.push(ident);
+
+                if !self.match_tokentype(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
+
+        self.consume(
+            TokenType::LeftBrace,
+            &format!("Expect '{{' before {} body.", kind),
+        )?;
+
+        let body = self.block()?;
+
+        Ok(Stmt::new_function(name, parameters, body))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
@@ -333,19 +379,19 @@ impl Parser {
     fn finish_call(&mut self, callee: Expr) -> Result<Expr, LoxError> {
         let mut arguments = vec![];
 
-        let mut parse_argument = |this: &mut Self| -> Result<(), LoxError> {
-            if arguments.len() >= 255 {
-                error::lox_error_token(this.peek(), "Can't have more than 255 arguments.");
-                this.had_error.set(true);
-            }
-            arguments.push(this.expression()?);
-            Ok(())
-        };
-
         if !self.check(TokenType::RightParen) {
-            parse_argument(self)?;
-            while self.match_tokentype(&[TokenType::Comma]) {
-                parse_argument(self)?;
+            // Do-While loop
+            loop {
+                if arguments.len() >= 255 {
+                    error::lox_error_token(self.peek(), "Can't have more than 255 arguments.");
+                    self.had_error.set(true);
+                }
+
+                arguments.push(self.expression()?);
+
+                if !self.match_tokentype(&[TokenType::Comma]) {
+                    break;
+                }
             }
         }
 
