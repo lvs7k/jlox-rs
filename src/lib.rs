@@ -6,6 +6,7 @@ pub mod scanner;
 mod ast_printer;
 mod environment;
 mod expr;
+mod lox_callable;
 mod object;
 mod stmt;
 mod token;

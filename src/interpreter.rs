@@ -181,6 +181,13 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_call_expr(&mut self, expr: &ExprCall) -> Result<Object, LoxError> {
+        let callee = self.evaluate(&*expr.callee)?;
+
+        let mut arguments = vec![];
+        for argument in &expr.arguments {
+            arguments.push(self.evaluate(argument)?);
+        }
+
         todo!();
     }
 }
