@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use crate::{
     error::{self, LoxError},
     expr::Expr,
@@ -11,15 +13,22 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    had_error: Cell<bool>,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+        Self {
+            tokens,
+            current: 0,
+            had_error: Cell::new(false),
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
         let mut statements = Vec::new();
+
+        self.had_error.set(false);
 
         while !self.is_at_end() {
             match self.declaration() {
@@ -27,6 +36,10 @@ impl Parser {
                 Ok(None) => (), // synchronize
                 Err(e) => return Err(e),
             }
+        }
+
+        if self.had_error.get() {
+            return Err(LoxError::ParseError);
         }
 
         Ok(statements)
@@ -205,9 +218,7 @@ impl Parser {
             }
 
             error::lox_error_token(&equals, "Invalid assignment target.");
-            // 8.4.1 Assignment syntax
-            // [!WARNING] Original implementation doesn't throw error here.
-            return Err(LoxError::ParseError);
+            self.had_error.set(true);
         }
 
         Ok(expr)
@@ -323,6 +334,10 @@ impl Parser {
         let mut arguments = vec![];
 
         let mut parse_argument = |this: &mut Self| -> Result<(), LoxError> {
+            if arguments.len() >= 255 {
+                error::lox_error_token(this.peek(), "Can't have more than 255 arguments.");
+                this.had_error.set(true);
+            }
             arguments.push(this.expression()?);
             Ok(())
         };
@@ -411,6 +426,7 @@ impl Parser {
 
     fn error(&self, token: &Token, message: &str) -> LoxError {
         error::lox_error_token(token, message);
+        self.had_error.set(true);
         LoxError::ParseError
     }
 
