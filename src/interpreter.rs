@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, cell::RefCell, rc::Rc, time::SystemTime};
+use std::{cell::RefCell, rc::Rc, time::SystemTime};
 
 use crate::{
     environment::Environment,
@@ -317,7 +317,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> Result<(), LoxError> {
-        let function = LoxFunction::new(stmt.clone());
+        let function = LoxFunction::new(stmt.clone(), self.environment.clone());
         self.environment.as_ref().borrow_mut().define(
             stmt.name.lexeme.clone(),
             Object::Callable(CallableKind::Function(function)),

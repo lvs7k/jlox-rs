@@ -4,7 +4,7 @@ use crate::{
     error::{self, LoxError},
     expr::Expr,
     object::Object,
-    stmt::{Stmt, StmtReturn},
+    stmt::Stmt,
     token::Token,
     token_type::TokenType,
 };

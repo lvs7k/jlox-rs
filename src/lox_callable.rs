@@ -48,11 +48,15 @@ impl LoxCallable for CallableKind {
 #[derive(Debug, Clone)]
 pub struct LoxFunction {
     declaration: StmtFunction,
+    closure: Rc<RefCell<Environment>>,
 }
 
 impl LoxFunction {
-    pub fn new(declaration: StmtFunction) -> Self {
-        Self { declaration }
+    pub fn new(declaration: StmtFunction, closure: Rc<RefCell<Environment>>) -> Self {
+        Self {
+            declaration,
+            closure,
+        }
     }
 }
 
@@ -68,7 +72,7 @@ impl LoxCallable for LoxFunction {
         interpreter: &mut Interpreter,
         arguments: &[Object],
     ) -> Result<Object, LoxError> {
-        let mut environment = Environment::new(Some(interpreter.globals.clone()));
+        let mut environment = Environment::new(Some(self.closure.clone()));
 
         for (param, obj) in self.declaration.params.iter().zip(arguments) {
             environment.define(param.lexeme.clone(), obj.clone());
