@@ -4,6 +4,7 @@ use crate::{
     environment::Environment,
     error::{self, LoxError},
     expr::*,
+    lox_callable::LoxCallable,
     object::Object,
     stmt::*,
     token::Token,
@@ -198,7 +199,18 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             }
         };
 
-        todo!();
+        if arguments.len() != function.arity() {
+            return Err(LoxError::RuntimeError(
+                expr.paren.clone(),
+                format!(
+                    "Expected {} arguments but got {}.",
+                    function.arity(),
+                    arguments.len()
+                ),
+            ));
+        }
+
+        Ok(function.call(self, &arguments))
     }
 }
 
