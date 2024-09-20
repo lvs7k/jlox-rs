@@ -206,7 +206,7 @@ impl Parser {
 
         let body = self.block()?;
 
-        Ok(Stmt::new_function(name, parameters, body))
+        Ok(Stmt::new_function(Box::new(name), parameters, body))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, LoxError> {

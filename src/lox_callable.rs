@@ -1,7 +1,12 @@
-use crate::{interpreter::Interpreter, object::Object};
+use std::{cell::RefCell, rc::Rc};
+
+use crate::{
+    environment::Environment, error::LoxError, interpreter::Interpreter, object::Object, stmt::*,
+};
 
 pub trait LoxCallable {
-    fn call(&self, interpreter: &mut Interpreter, arguments: &[Object]) -> Object;
+    fn call(&self, interpreter: &mut Interpreter, arguments: &[Object])
+        -> Result<Object, LoxError>;
     fn arity(&self) -> usize;
 }
 
@@ -21,7 +26,11 @@ impl std::fmt::Display for CallableKind {
 }
 
 impl LoxCallable for CallableKind {
-    fn call(&self, interpreter: &mut Interpreter, arguments: &[Object]) -> Object {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Object],
+    ) -> Result<Object, LoxError> {
         match self {
             Self::Function(fun) => fun.call(interpreter, arguments),
             Self::Native(fun) => fun.call(interpreter, arguments),
@@ -37,32 +46,55 @@ impl LoxCallable for CallableKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct LoxFunction {}
+pub struct LoxFunction {
+    declaration: StmtFunction,
+}
+
+impl LoxFunction {
+    fn new(declaration: StmtFunction) -> Self {
+        Self { declaration }
+    }
+}
 
 impl std::fmt::Display for LoxFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "<lox fn>")
+        write!(f, "<fn {}>", self.declaration.name.lexeme)
     }
 }
 
 impl LoxCallable for LoxFunction {
-    fn call(&self, interpreter: &mut Interpreter, arguments: &[Object]) -> Object {
-        todo!();
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Object],
+    ) -> Result<Object, LoxError> {
+        let mut environment = Environment::new(Some(interpreter.globals.clone()));
+
+        for (param, obj) in self.declaration.params.iter().zip(arguments) {
+            environment.define(param.lexeme.clone(), obj.clone());
+        }
+
+        interpreter.execute_block(&self.declaration.body, Rc::new(RefCell::new(environment)))?;
+
+        Ok(Object::Null)
     }
 
     fn arity(&self) -> usize {
-        todo!();
+        self.declaration.params.len()
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct NativeFunction {
-    pointer: fn(&mut Interpreter, &[Object]) -> Object,
+    pointer: fn(&mut Interpreter, &[Object]) -> Result<Object, LoxError>,
     arity: usize,
 }
 
 impl NativeFunction {
-    pub fn new(pointer: fn(&mut Interpreter, &[Object]) -> Object, arity: usize) -> Self {
+    pub fn new(
+        pointer: fn(&mut Interpreter, &[Object]) -> Result<Object, LoxError>,
+        arity: usize,
+    ) -> Self {
         Self { pointer, arity }
     }
 }
@@ -74,7 +106,11 @@ impl std::fmt::Display for NativeFunction {
 }
 
 impl LoxCallable for NativeFunction {
-    fn call(&self, interpreter: &mut Interpreter, arguments: &[Object]) -> Object {
+    fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Object],
+    ) -> Result<Object, LoxError> {
         (self.pointer)(interpreter, arguments)
     }
 

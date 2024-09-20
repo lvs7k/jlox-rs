@@ -10,7 +10,7 @@ pub trait StmtVisitor<R> {
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> R;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Expression(StmtExpression),
     Print(StmtPrint),
@@ -65,48 +65,48 @@ impl Stmt {
         Self::While(StmtWhile { condition, body })
     }
 
-    pub fn new_function(name: Token, params: Vec<Token>, body: Vec<Stmt>) -> Self {
+    pub fn new_function(name: Box<Token>, params: Vec<Token>, body: Vec<Stmt>) -> Self {
         Self::Function(StmtFunction { name, params, body })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtExpression {
     pub expression: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtPrint {
     pub expression: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtVar {
     pub name: Token,
     pub initializer: Option<Expr>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtBlock {
     pub statements: Vec<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtIf {
     pub condition: Expr,
     pub then_branch: Box<Stmt>,
     pub else_branch: Option<Box<Stmt>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtWhile {
     pub condition: Expr,
     pub body: Box<Stmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StmtFunction {
-    pub name: Token,
+    pub name: Box<Token>,
     pub params: Vec<Token>,
     pub body: Vec<Stmt>,
 }

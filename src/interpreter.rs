@@ -22,13 +22,16 @@ impl Interpreter {
         let mut globals = Environment::new(None);
 
         let fn_clock = {
-            fn clock(_interpreter: &mut Interpreter, _arguments: &[Object]) -> Object {
+            fn clock(
+                _interpreter: &mut Interpreter,
+                _arguments: &[Object],
+            ) -> Result<Object, LoxError> {
                 // the number of non-leap seconds since the start of 1970 UTC.
                 let time = SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_secs_f64();
-                Object::Num(time)
+                Ok(Object::Num(time))
             }
             NativeFunction::new(clock, 0)
         };
@@ -73,7 +76,7 @@ impl Interpreter {
         stmt.accept(self)
     }
 
-    fn execute_block<S>(
+    pub fn execute_block<S>(
         &mut self,
         statements: S,
         environment: Rc<RefCell<Environment>>,
@@ -232,7 +235,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             ));
         }
 
-        Ok(function.call(self, &arguments))
+        function.call(self, &arguments)
     }
 }
 
