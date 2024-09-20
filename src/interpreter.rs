@@ -1,10 +1,10 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, time::SystemTime};
 
 use crate::{
     environment::Environment,
     error::{self, LoxError},
     expr::*,
-    lox_callable::LoxCallable,
+    lox_callable::*,
     object::Object,
     stmt::*,
     token::Token,
@@ -13,13 +13,35 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Interpreter {
-    pub environment: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
+    environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let mut globals = Environment::new(None);
+
+        let fn_clock = {
+            fn clock(_interpreter: &mut Interpreter, _arguments: &[Object]) -> Object {
+                // the number of non-leap seconds since the start of 1970 UTC.
+                let time = SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64();
+                Object::Num(time)
+            }
+            NativeFunction::new(clock, 0)
+        };
+
+        globals.define(
+            "clock".to_string(),
+            Object::Callable(CallableKind::Native(fn_clock)),
+        );
+
+        let globals = Rc::new(RefCell::new(globals));
         Self {
-            environment: Rc::new(RefCell::new(Environment::new(None))),
+            environment: globals.clone(),
+            globals,
         }
     }
 

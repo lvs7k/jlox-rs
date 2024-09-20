@@ -48,7 +48,7 @@ impl std::fmt::Display for Object {
             Self::Num(v) => write!(f, "{}", v),
             Self::Str(v) => write!(f, "{}", v),
             Self::Null => write!(f, "nil"),
-            Self::Callable(v) => todo!(),
+            Self::Callable(v) => write!(f, "{}", v),
         }
     }
 }
