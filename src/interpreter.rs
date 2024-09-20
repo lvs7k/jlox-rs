@@ -327,7 +327,13 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     }
 
     fn visit_return_stmt(&mut self, stmt: &StmtReturn) -> Result<(), LoxError> {
-        todo!();
+        let mut value = Object::Null;
+
+        if let Some(ref expr) = stmt.value {
+            value = self.evaluate(expr)?;
+        }
+
+        Err(LoxError::Return(value))
     }
 }
 

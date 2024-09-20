@@ -74,7 +74,11 @@ impl LoxCallable for LoxFunction {
             environment.define(param.lexeme.clone(), obj.clone());
         }
 
-        interpreter.execute_block(&self.declaration.body, Rc::new(RefCell::new(environment)))?;
+        if let Err(LoxError::Return(return_value)) =
+            interpreter.execute_block(&self.declaration.body, Rc::new(RefCell::new(environment)))
+        {
+            return Ok(return_value);
+        }
 
         Ok(Object::Null)
     }

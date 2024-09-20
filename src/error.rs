@@ -1,10 +1,11 @@
-use crate::{token::Token, token_type::TokenType};
+use crate::{object::Object, token::Token, token_type::TokenType};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LoxError {
     ScanError,
     ParseError,
     RuntimeError(Token, String),
+    Return(Object),
 }
 
 pub fn lox_error_line(line: usize, message: &str) {
