@@ -51,7 +51,7 @@ pub struct LoxFunction {
 }
 
 impl LoxFunction {
-    fn new(declaration: StmtFunction) -> Self {
+    pub fn new(declaration: StmtFunction) -> Self {
         Self { declaration }
     }
 }
