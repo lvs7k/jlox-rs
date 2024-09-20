@@ -302,7 +302,43 @@ impl Parser {
             return Ok(Expr::new_unary(operator, right));
         }
 
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.primary()?;
+
+        loop {
+            if self.match_tokentype(&[TokenType::LeftParen]) {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(expr)
+    }
+
+    fn finish_call(&mut self, callee: Expr) -> Result<Expr, LoxError> {
+        let mut arguments = vec![];
+
+        let mut parse_argument = |this: &mut Self| -> Result<(), LoxError> {
+            arguments.push(this.expression()?);
+            Ok(())
+        };
+
+        if !self.check(TokenType::RightParen) {
+            parse_argument(self)?;
+            while self.match_tokentype(&[TokenType::Comma]) {
+                parse_argument(self)?;
+            }
+        }
+
+        let paren = self
+            .consume(TokenType::RightParen, "Expect ')' after arguments.")?
+            .clone();
+
+        Ok(Expr::new_call(callee, paren, arguments))
     }
 
     fn primary(&mut self) -> Result<Expr, LoxError> {

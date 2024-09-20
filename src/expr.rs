@@ -8,6 +8,7 @@ pub trait ExprVisitor<R> {
     fn visit_variable_expr(&mut self, expr: &ExprVariable) -> R;
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> R;
     fn visit_logical_expr(&mut self, expr: &ExprLogical) -> R;
+    fn visit_call_expr(&mut self, expr: &ExprCall) -> R;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -19,6 +20,7 @@ pub enum Expr {
     Variable(ExprVariable),
     Assign(ExprAssign),
     Logical(ExprLogical),
+    Call(ExprCall),
 }
 
 impl Expr {
@@ -34,6 +36,7 @@ impl Expr {
             Expr::Variable(ref expr) => visitor.visit_variable_expr(expr),
             Expr::Assign(ref expr) => visitor.visit_assign_expr(expr),
             Expr::Logical(ref expr) => visitor.visit_logical_expr(expr),
+            Expr::Call(ref expr) => visitor.visit_call_expr(expr),
         }
     }
 
@@ -80,6 +83,14 @@ impl Expr {
             right: Box::new(right),
         })
     }
+
+    pub fn new_call(callee: Expr, paren: Token, arguments: Vec<Expr>) -> Self {
+        Self::Call(ExprCall {
+            callee: Box::new(callee),
+            paren,
+            arguments,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -121,4 +132,11 @@ pub struct ExprLogical {
     pub left: Box<Expr>,
     pub operator: Token,
     pub right: Box<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExprCall {
+    pub callee: Box<Expr>,
+    pub paren: Token,
+    pub arguments: Vec<Expr>,
 }

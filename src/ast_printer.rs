@@ -45,15 +45,19 @@ impl ExprVisitor<String> for AstPrinter {
         self.parenthesize("group", &[&*expr.expression])
     }
 
-    fn visit_variable_expr(&mut self, expr: &ExprVariable) -> String {
+    fn visit_variable_expr(&mut self, _expr: &ExprVariable) -> String {
         unimplemented!();
     }
 
-    fn visit_assign_expr(&mut self, expr: &ExprAssign) -> String {
+    fn visit_assign_expr(&mut self, _expr: &ExprAssign) -> String {
         unimplemented!();
     }
 
-    fn visit_logical_expr(&mut self, expr: &ExprLogical) -> String {
+    fn visit_logical_expr(&mut self, _expr: &ExprLogical) -> String {
+        unimplemented!();
+    }
+
+    fn visit_call_expr(&mut self, _expr: &ExprCall) -> String {
         unimplemented!();
     }
 }

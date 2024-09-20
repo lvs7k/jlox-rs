@@ -179,6 +179,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         self.evaluate(&*expr.right)
     }
+
+    fn visit_call_expr(&mut self, expr: &ExprCall) -> Result<Object, LoxError> {
+        todo!();
+    }
 }
 
 fn check_number_operand(operator: &Token, operand: &Object) -> Result<(), LoxError> {
