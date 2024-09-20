@@ -8,6 +8,7 @@ pub trait StmtVisitor<R> {
     fn visit_if_stmt(&mut self, stmt: &StmtIf) -> R;
     fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> R;
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> R;
+    fn visit_return_stmt(&mut self, stmt: &StmtReturn) -> R;
 }
 
 #[derive(Debug, Clone)]
@@ -19,6 +20,7 @@ pub enum Stmt {
     If(StmtIf),
     While(StmtWhile),
     Function(StmtFunction),
+    Return(StmtReturn),
 }
 
 impl Stmt {
@@ -34,6 +36,7 @@ impl Stmt {
             Stmt::If(ref stmt) => visitor.visit_if_stmt(stmt),
             Stmt::While(ref stmt) => visitor.visit_while_stmt(stmt),
             Stmt::Function(ref stmt) => visitor.visit_function_stmt(stmt),
+            Stmt::Return(ref stmt) => visitor.visit_return_stmt(stmt),
         }
     }
 
@@ -67,6 +70,10 @@ impl Stmt {
 
     pub fn new_function(name: Box<Token>, params: Vec<Token>, body: Vec<Stmt>) -> Self {
         Self::Function(StmtFunction { name, params, body })
+    }
+
+    pub fn new_return(keyword: Token, value: Option<Expr>) -> Self {
+        Self::Return(StmtReturn { keyword, value })
     }
 }
 
@@ -109,4 +116,10 @@ pub struct StmtFunction {
     pub name: Box<Token>,
     pub params: Vec<Token>,
     pub body: Vec<Stmt>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StmtReturn {
+    pub keyword: Token,
+    pub value: Option<Expr>,
 }

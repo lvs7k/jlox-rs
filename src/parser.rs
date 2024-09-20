@@ -4,7 +4,7 @@ use crate::{
     error::{self, LoxError},
     expr::Expr,
     object::Object,
-    stmt::Stmt,
+    stmt::{Stmt, StmtReturn},
     token::Token,
     token_type::TokenType,
 };
@@ -83,6 +83,9 @@ impl Parser {
         if self.match_tokentype(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.match_tokentype(&[TokenType::Return]) {
+            return self.return_statement();
+        }
         if self.match_tokentype(&[TokenType::While]) {
             return self.while_statement();
         }
@@ -154,6 +157,19 @@ impl Parser {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         Ok(Stmt::new_print(value))
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt, LoxError> {
+        let keyword = self.previous().clone();
+
+        let mut value = None;
+        if !self.check(TokenType::Semicolon) {
+            value = Some(self.expression()?);
+        }
+
+        self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
+
+        Ok(Stmt::new_return(keyword, value))
     }
 
     fn while_statement(&mut self) -> Result<Stmt, LoxError> {

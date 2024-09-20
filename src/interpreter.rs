@@ -325,6 +325,10 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
 
         Ok(())
     }
+
+    fn visit_return_stmt(&mut self, stmt: &StmtReturn) -> Result<(), LoxError> {
+        todo!();
+    }
 }
 
 #[cfg(test)]
