@@ -188,6 +188,16 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             arguments.push(self.evaluate(argument)?);
         }
 
+        let function = match callee {
+            Object::Callable(f) => f,
+            _ => {
+                return Err(LoxError::RuntimeError(
+                    expr.paren.clone(),
+                    "Can only call functions and classes.".to_string(),
+                ))
+            }
+        };
+
         todo!();
     }
 }

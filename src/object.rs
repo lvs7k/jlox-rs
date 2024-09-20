@@ -1,9 +1,12 @@
+use crate::lox_callable::CallableKind;
+
 #[derive(Debug, Clone)]
 pub enum Object {
     Bool(bool),
     Num(f64),
     Str(String),
     Null,
+    Callable(CallableKind),
 }
 
 impl Object {
@@ -21,6 +24,10 @@ impl Object {
 
     pub fn is_null(&self) -> bool {
         matches!(self, Object::Null)
+    }
+
+    pub fn is_callable(&self) -> bool {
+        matches!(self, Self::Callable(_))
     }
 
     pub fn is_truthy(&self) -> bool {
@@ -41,6 +48,7 @@ impl std::fmt::Display for Object {
             Self::Num(v) => write!(f, "{}", v),
             Self::Str(v) => write!(f, "{}", v),
             Self::Null => write!(f, "nil"),
+            Self::Callable(v) => todo!(),
         }
     }
 }
