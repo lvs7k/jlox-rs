@@ -68,20 +68,6 @@ impl Interpreter {
         self.locals.insert(expr.clone(), depth);
     }
 
-    fn evaluate<E>(&mut self, expr: E) -> Result<Object, LoxError>
-    where
-        E: std::ops::Deref<Target = Expr>,
-    {
-        expr.accept(self)
-    }
-
-    fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>
-    where
-        S: std::ops::Deref<Target = Stmt>,
-    {
-        stmt.accept(self)
-    }
-
     pub fn execute_block<S>(
         &mut self,
         statements: S,
@@ -102,6 +88,32 @@ impl Interpreter {
         self.environment = previous;
 
         Ok(())
+    }
+
+    fn evaluate<E>(&mut self, expr: E) -> Result<Object, LoxError>
+    where
+        E: std::ops::Deref<Target = Expr>,
+    {
+        expr.accept(self)
+    }
+
+    fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>
+    where
+        S: std::ops::Deref<Target = Stmt>,
+    {
+        stmt.accept(self)
+    }
+
+    fn look_up_variable(&self, name: &Token, expr: &Expr) -> Result<Object, LoxError> {
+        if let Some(distance) = self.locals.get(expr) {
+            Ok(self
+                .environment
+                .as_ref()
+                .borrow()
+                .get_at(*distance, &name.lexeme))
+        } else {
+            self.globals.as_ref().borrow().get(name)
+        }
     }
 }
 
@@ -185,8 +197,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_variable_expr(&mut self, expr: &ExprVariable) -> Result<Object, LoxError> {
-        let value = self.environment.as_ref().borrow().get(&expr.name)?;
-        Ok(value.clone())
+        self.look_up_variable(&expr.name, &Expr::Variable(expr.clone()))
     }
 
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<Object, LoxError> {

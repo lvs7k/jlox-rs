@@ -52,4 +52,31 @@ impl Environment {
     pub fn define(&mut self, name: String, value: Object) {
         self.values.insert(name, value);
     }
+
+    pub fn get_at(&self, distance: usize, name: &str) -> Object {
+        if distance == 0 {
+            return self.values.get(name).unwrap().clone();
+        }
+
+        self.ancestor(distance)
+            .as_ref()
+            .borrow()
+            .values
+            .get(name)
+            .unwrap()
+            .clone()
+    }
+
+    fn ancestor(&self, distance: usize) -> Rc<RefCell<Environment>> {
+        assert!(distance > 0);
+
+        let mut environment = self.enclosing.clone().unwrap();
+
+        for _ in 1..distance {
+            let temp = environment.as_ref().borrow().enclosing.clone().unwrap();
+            environment = temp;
+        }
+
+        environment
+    }
 }
