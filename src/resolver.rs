@@ -24,21 +24,19 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
+    pub fn resolve(&mut self, statements: &[Stmt]) {
         self.had_error = false;
 
         for statement in statements {
-            self.resolve_stmt(statement)?;
+            self.resolve_stmt(statement);
         }
-
-        Ok(())
     }
 
-    fn resolve_stmt(&mut self, statement: &Stmt) -> Result<(), LoxError> {
+    fn resolve_stmt(&mut self, statement: &Stmt) {
         statement.accept(self)
     }
 
-    fn resolve_expr(&mut self, expr: &Expr) -> Result<(), LoxError> {
+    fn resolve_expr(&mut self, expr: &Expr) {
         expr.accept(self)
     }
 
@@ -70,82 +68,91 @@ impl<'a> Resolver<'a> {
             .insert(name.lexeme.to_string(), true);
     }
 
-    fn resolve_local(&mut self, expr: &Expr, name: &Token) -> Result<(), LoxError> {
+    fn resolve_local(&mut self, expr: &Expr, name: &Token) {
         for (i, map) in self.scopes.iter().rev().enumerate() {
             if map.contains_key(&name.lexeme) {
-                self.interpreter.resolve(expr, i)?;
-                return Ok(());
+                self.interpreter.resolve(expr, i);
+                return;
             }
         }
+    }
 
-        Ok(())
+    fn resolve_function(&mut self, function: &StmtFunction) {
+        self.begin_scope();
+
+        for param in &function.params {
+            self.declare(param);
+            self.define(param);
+        }
+
+        self.resolve(&function.body);
+        self.end_scope();
     }
 }
 
-impl<'a> StmtVisitor<Result<(), LoxError>> for Resolver<'a> {
-    fn visit_expression_stmt(&mut self, stmt: &StmtExpression) -> Result<(), LoxError> {
+impl<'a> StmtVisitor<()> for Resolver<'a> {
+    fn visit_expression_stmt(&mut self, stmt: &StmtExpression) {
         todo!();
     }
 
-    fn visit_print_stmt(&mut self, stmt: &StmtPrint) -> Result<(), LoxError> {
+    fn visit_print_stmt(&mut self, stmt: &StmtPrint) {
         todo!();
     }
 
-    fn visit_var_stmt(&mut self, stmt: &StmtVar) -> Result<(), LoxError> {
+    fn visit_var_stmt(&mut self, stmt: &StmtVar) {
         self.declare(&stmt.name);
 
         if let Some(ref initializer) = stmt.initializer {
-            self.resolve_expr(initializer)?;
+            self.resolve_expr(initializer);
         }
 
         self.define(&stmt.name);
-
-        Ok(())
     }
 
-    fn visit_block_stmt(&mut self, stmt: &StmtBlock) -> Result<(), LoxError> {
+    fn visit_block_stmt(&mut self, stmt: &StmtBlock) {
         self.begin_scope();
-        self.resolve(&stmt.statements)?;
+        self.resolve(&stmt.statements);
         self.end_scope();
-
-        Ok(())
     }
 
-    fn visit_if_stmt(&mut self, stmt: &StmtIf) -> Result<(), LoxError> {
+    fn visit_if_stmt(&mut self, stmt: &StmtIf) {
         todo!();
     }
 
-    fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> Result<(), LoxError> {
+    fn visit_while_stmt(&mut self, stmt: &StmtWhile) {
         todo!();
     }
 
-    fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> Result<(), LoxError> {
-        todo!();
+    fn visit_function_stmt(&mut self, stmt: &StmtFunction) {
+        self.declare(&stmt.name);
+        self.define(&stmt.name);
+
+        self.resolve_function(stmt);
     }
 
-    fn visit_return_stmt(&mut self, stmt: &StmtReturn) -> Result<(), LoxError> {
+    fn visit_return_stmt(&mut self, stmt: &StmtReturn) {
         todo!();
     }
 }
 
-impl<'a> ExprVisitor<Result<(), LoxError>> for Resolver<'a> {
-    fn visit_literal_expr(&mut self, expr: &ExprLiteral) -> Result<(), LoxError> {
+impl<'a> ExprVisitor<()> for Resolver<'a> {
+    fn visit_literal_expr(&mut self, expr: &ExprLiteral) {
         todo!();
     }
 
-    fn visit_unary_expr(&mut self, expr: &ExprUnary) -> Result<(), LoxError> {
+    fn visit_unary_expr(&mut self, expr: &ExprUnary) {
         todo!();
     }
 
-    fn visit_binary_expr(&mut self, expr: &ExprBinary) -> Result<(), LoxError> {
+    fn visit_binary_expr(&mut self, expr: &ExprBinary) {
         todo!();
     }
 
-    fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> Result<(), LoxError> {
+    fn visit_grouping_expr(&mut self, expr: &ExprGrouping) {
         todo!();
     }
 
-    fn visit_variable_expr(&mut self, expr: &ExprVariable) -> Result<(), LoxError> {
+    fn visit_variable_expr(&mut self, expr: &ExprVariable) {
         if !self.scopes.is_empty()
             && matches!(
                 self.scopes.last_mut().unwrap().get(&expr.name.lexeme),
@@ -159,22 +166,19 @@ impl<'a> ExprVisitor<Result<(), LoxError>> for Resolver<'a> {
             self.had_error = true;
         }
 
-        self.resolve_local(&Expr::Variable(expr.clone()), &expr.name)?;
-
-        Ok(())
+        self.resolve_local(&Expr::Variable(expr.clone()), &expr.name);
     }
 
-    fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<(), LoxError> {
-        self.resolve_expr(&expr.value)?;
-        self.resolve_local(&Expr::Assign(expr.clone()), &expr.name)?;
-        Ok(())
+    fn visit_assign_expr(&mut self, expr: &ExprAssign) {
+        self.resolve_expr(&expr.value);
+        self.resolve_local(&Expr::Assign(expr.clone()), &expr.name);
     }
 
-    fn visit_logical_expr(&mut self, expr: &ExprLogical) -> Result<(), LoxError> {
+    fn visit_logical_expr(&mut self, expr: &ExprLogical) {
         todo!();
     }
 
-    fn visit_call_expr(&mut self, expr: &ExprCall) -> Result<(), LoxError> {
+    fn visit_call_expr(&mut self, expr: &ExprCall) {
         todo!();
     }
 }
