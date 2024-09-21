@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{error::LoxError, expr::*, interpreter::Interpreter, stmt::*};
+use crate::{error::LoxError, expr::*, interpreter::Interpreter, stmt::*, token::Token};
 
 #[derive(Debug)]
 pub struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
     scopes: Vec<HashMap<String, bool>>,
+    had_error: bool,
 }
 
 impl<'a> Resolver<'a> {
@@ -13,12 +14,15 @@ impl<'a> Resolver<'a> {
         Self {
             interpreter,
             scopes: vec![],
+            had_error: false,
         }
     }
 
     pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
+        self.had_error = false;
+
         for statement in statements {
-            self.resolve_stmt(statement);
+            self.resolve_stmt(statement)?;
         }
 
         Ok(())
@@ -39,6 +43,26 @@ impl<'a> Resolver<'a> {
     fn end_scope(&mut self) {
         self.scopes.pop();
     }
+
+    fn declare(&mut self, name: &Token) {
+        if self.scopes.is_empty() {
+            return;
+        }
+
+        let scope = self.scopes.last_mut().unwrap();
+        scope.insert(name.lexeme.to_string(), false);
+    }
+
+    fn define(&mut self, name: &Token) {
+        if self.scopes.is_empty() {
+            return;
+        }
+
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .insert(name.lexeme.to_string(), true);
+    }
 }
 
 impl<'a> StmtVisitor<Result<(), LoxError>> for Resolver<'a> {
@@ -51,12 +75,20 @@ impl<'a> StmtVisitor<Result<(), LoxError>> for Resolver<'a> {
     }
 
     fn visit_var_stmt(&mut self, stmt: &StmtVar) -> Result<(), LoxError> {
-        todo!();
+        self.declare(&stmt.name);
+
+        if let Some(ref initializer) = stmt.initializer {
+            self.resolve_expr(initializer)?;
+        }
+
+        self.define(&stmt.name);
+
+        Ok(())
     }
 
     fn visit_block_stmt(&mut self, stmt: &StmtBlock) -> Result<(), LoxError> {
         self.begin_scope();
-        self.resolve(&stmt.statements);
+        self.resolve(&stmt.statements)?;
         self.end_scope();
 
         Ok(())
