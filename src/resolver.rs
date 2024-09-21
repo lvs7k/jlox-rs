@@ -1,6 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{error::LoxError, expr::*, interpreter::Interpreter, stmt::*, token::Token};
+use crate::{
+    error::{self, LoxError},
+    expr::*,
+    interpreter::Interpreter,
+    stmt::*,
+    token::Token,
+};
 
 #[derive(Debug)]
 pub struct Resolver<'a> {
@@ -62,6 +68,17 @@ impl<'a> Resolver<'a> {
             .last_mut()
             .unwrap()
             .insert(name.lexeme.to_string(), true);
+    }
+
+    fn resolve_local(&mut self, expr: &Expr, name: &Token) -> Result<(), LoxError> {
+        for (i, map) in self.scopes.iter().rev().enumerate() {
+            if map.contains_key(&name.lexeme) {
+                self.interpreter.resolve(expr, i)?;
+                return Ok(());
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -129,7 +146,22 @@ impl<'a> ExprVisitor<Result<(), LoxError>> for Resolver<'a> {
     }
 
     fn visit_variable_expr(&mut self, expr: &ExprVariable) -> Result<(), LoxError> {
-        todo!();
+        if !self.scopes.is_empty()
+            && matches!(
+                self.scopes.last_mut().unwrap().get(&expr.name.lexeme),
+                None | Some(false)
+            )
+        {
+            error::lox_error_token(
+                &expr.name,
+                "Can't read local variable in its own initializer.",
+            );
+            self.had_error = true;
+        }
+
+        self.resolve_local(&Expr::Variable(expr.clone()), &expr.name)?;
+
+        Ok(())
     }
 
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<(), LoxError> {
