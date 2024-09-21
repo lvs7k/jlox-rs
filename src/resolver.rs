@@ -27,15 +27,21 @@ impl<'a> Resolver<'a> {
     pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
         self.had_error = false;
 
-        for statement in statements {
-            self.resolve_stmt(statement);
-        }
+        self.resolve_stmts(statements);
 
         if self.had_error {
             return Err(LoxError::ResolveError);
         }
 
         Ok(())
+    }
+
+    fn resolve_stmts(&mut self, statements: &[Stmt]) {
+        self.had_error = false;
+
+        for statement in statements {
+            self.resolve_stmt(statement);
+        }
     }
 
     fn resolve_stmt(&mut self, statement: &Stmt) {
@@ -91,7 +97,7 @@ impl<'a> Resolver<'a> {
             self.define(param);
         }
 
-        self.resolve(&function.body);
+        self.resolve_stmts(&function.body);
         self.end_scope();
     }
 }
@@ -117,7 +123,7 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
 
     fn visit_block_stmt(&mut self, stmt: &StmtBlock) {
         self.begin_scope();
-        self.resolve(&stmt.statements);
+        self.resolve_stmts(&stmt.statements);
         self.end_scope();
     }
 

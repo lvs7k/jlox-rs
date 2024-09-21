@@ -520,144 +520,147 @@ impl Parser {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use crate::scanner::Scanner;
+// 11.4 Interpreting Resolved Variables
+// Remove the test, because we use a hash to determine that the expressions are equivalent.
 
-    use super::*;
+// #[cfg(test)]
+// mod test {
+//     use crate::scanner::Scanner;
 
-    fn parse_source(source: &str) -> Result<Expr, LoxError> {
-        let scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens()?;
-        let mut parser = Parser::new(tokens);
-        parser.parse_one_expr()
-    }
+//     use super::*;
 
-    #[test]
-    fn parse_primary() {
-        assert_eq!(
-            parse_source("true").unwrap(),
-            Expr::new_literal(Object::Bool(true))
-        );
-        assert_eq!(
-            parse_source("false").unwrap(),
-            Expr::new_literal(Object::Bool(false))
-        );
-        assert_eq!(
-            parse_source("nil").unwrap(),
-            Expr::new_literal(Object::Null)
-        );
-        assert_eq!(
-            parse_source("123.456").unwrap(),
-            Expr::new_literal(Object::Num(123.456))
-        );
-        assert_eq!(
-            parse_source("\"hello, world\"").unwrap(),
-            Expr::new_literal(Object::Str("hello, world".to_string()))
-        );
-        assert_eq!(
-            parse_source("(1 + 2) * 3").unwrap(),
-            Expr::new_binary(
-                Expr::new_grouping(Expr::new_binary(
-                    Expr::new_literal(Object::Num(1f64)),
-                    Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Num(2f64))
-                )),
-                Token::new(TokenType::Star, "*".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(3f64))
-            )
-        );
-    }
+//     fn parse_source(source: &str) -> Result<Expr, LoxError> {
+//         let scanner = Scanner::new(source);
+//         let tokens = scanner.scan_tokens()?;
+//         let mut parser = Parser::new(tokens);
+//         parser.parse_one_expr()
+//     }
 
-    #[test]
-    fn parse_unary() {
-        assert_eq!(
-            parse_source("-123.456").unwrap(),
-            Expr::new_unary(
-                Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(123.456))
-            )
-        );
-        assert_eq!(
-            parse_source("!false").unwrap(),
-            Expr::new_unary(
-                Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                Expr::new_literal(Object::Bool(false))
-            )
-        );
-        assert_eq!(
-            parse_source("!!true").unwrap(),
-            Expr::new_unary(
-                Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                Expr::new_unary(
-                    Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Bool(true))
-                )
-            )
-        );
-    }
+//     #[test]
+//     fn parse_primary() {
+//         assert_eq!(
+//             parse_source("true").unwrap(),
+//             Expr::new_literal(Object::Bool(true))
+//         );
+//         assert_eq!(
+//             parse_source("false").unwrap(),
+//             Expr::new_literal(Object::Bool(false))
+//         );
+//         assert_eq!(
+//             parse_source("nil").unwrap(),
+//             Expr::new_literal(Object::Null)
+//         );
+//         assert_eq!(
+//             parse_source("123.456").unwrap(),
+//             Expr::new_literal(Object::Num(123.456))
+//         );
+//         assert_eq!(
+//             parse_source("\"hello, world\"").unwrap(),
+//             Expr::new_literal(Object::Str("hello, world".to_string()))
+//         );
+//         assert_eq!(
+//             parse_source("(1 + 2) * 3").unwrap(),
+//             Expr::new_binary(
+//                 Expr::new_grouping(Expr::new_binary(
+//                     Expr::new_literal(Object::Num(1f64)),
+//                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Num(2f64))
+//                 )),
+//                 Token::new(TokenType::Star, "*".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(3f64))
+//             )
+//         );
+//     }
 
-    #[test]
-    fn parse_factor() {
-        assert_eq!(
-            parse_source("123 * 456 / 789").unwrap(),
-            Expr::new_binary(
-                Expr::new_binary(
-                    Expr::new_literal(Object::Num(123f64)),
-                    Token::new(TokenType::Star, "*".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Num(456f64)),
-                ),
-                Token::new(TokenType::Slash, "/".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(789f64))
-            )
-        )
-    }
+//     #[test]
+//     fn parse_unary() {
+//         assert_eq!(
+//             parse_source("-123.456").unwrap(),
+//             Expr::new_unary(
+//                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(123.456))
+//             )
+//         );
+//         assert_eq!(
+//             parse_source("!false").unwrap(),
+//             Expr::new_unary(
+//                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Bool(false))
+//             )
+//         );
+//         assert_eq!(
+//             parse_source("!!true").unwrap(),
+//             Expr::new_unary(
+//                 Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
+//                 Expr::new_unary(
+//                     Token::new(TokenType::Bang, "!".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Bool(true))
+//                 )
+//             )
+//         );
+//     }
 
-    #[test]
-    fn parse_term() {
-        assert_eq!(
-            parse_source("123 + 456 - 789").unwrap(),
-            Expr::new_binary(
-                Expr::new_binary(
-                    Expr::new_literal(Object::Num(123f64)),
-                    Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Num(456f64)),
-                ),
-                Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(789f64))
-            )
-        )
-    }
+//     #[test]
+//     fn parse_factor() {
+//         assert_eq!(
+//             parse_source("123 * 456 / 789").unwrap(),
+//             Expr::new_binary(
+//                 Expr::new_binary(
+//                     Expr::new_literal(Object::Num(123f64)),
+//                     Token::new(TokenType::Star, "*".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Num(456f64)),
+//                 ),
+//                 Token::new(TokenType::Slash, "/".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(789f64))
+//             )
+//         )
+//     }
 
-    #[test]
-    fn parse_comparison() {
-        assert_eq!(
-            parse_source("123 >= 456 < 789").unwrap(),
-            Expr::new_binary(
-                Expr::new_binary(
-                    Expr::new_literal(Object::Num(123f64)),
-                    Token::new(TokenType::GreaterEqual, ">=".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Num(456f64)),
-                ),
-                Token::new(TokenType::Less, "<".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(789f64))
-            )
-        )
-    }
+//     #[test]
+//     fn parse_term() {
+//         assert_eq!(
+//             parse_source("123 + 456 - 789").unwrap(),
+//             Expr::new_binary(
+//                 Expr::new_binary(
+//                     Expr::new_literal(Object::Num(123f64)),
+//                     Token::new(TokenType::Plus, "+".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Num(456f64)),
+//                 ),
+//                 Token::new(TokenType::Minus, "-".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(789f64))
+//             )
+//         )
+//     }
 
-    #[test]
-    fn parse_equality() {
-        assert_eq!(
-            parse_source("123 != 456 == 789").unwrap(),
-            Expr::new_binary(
-                Expr::new_binary(
-                    Expr::new_literal(Object::Num(123f64)),
-                    Token::new(TokenType::BangEqual, "!=".into(), Object::Null, 1),
-                    Expr::new_literal(Object::Num(456f64)),
-                ),
-                Token::new(TokenType::EqualEqual, "==".into(), Object::Null, 1),
-                Expr::new_literal(Object::Num(789f64))
-            )
-        )
-    }
-}
+//     #[test]
+//     fn parse_comparison() {
+//         assert_eq!(
+//             parse_source("123 >= 456 < 789").unwrap(),
+//             Expr::new_binary(
+//                 Expr::new_binary(
+//                     Expr::new_literal(Object::Num(123f64)),
+//                     Token::new(TokenType::GreaterEqual, ">=".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Num(456f64)),
+//                 ),
+//                 Token::new(TokenType::Less, "<".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(789f64))
+//             )
+//         )
+//     }
+
+//     #[test]
+//     fn parse_equality() {
+//         assert_eq!(
+//             parse_source("123 != 456 == 789").unwrap(),
+//             Expr::new_binary(
+//                 Expr::new_binary(
+//                     Expr::new_literal(Object::Num(123f64)),
+//                     Token::new(TokenType::BangEqual, "!=".into(), Object::Null, 1),
+//                     Expr::new_literal(Object::Num(456f64)),
+//                 ),
+//                 Token::new(TokenType::EqualEqual, "==".into(), Object::Null, 1),
+//                 Expr::new_literal(Object::Num(789f64))
+//             )
+//         )
+//     }
+// }

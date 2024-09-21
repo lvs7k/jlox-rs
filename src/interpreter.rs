@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc, time::SystemTime};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, time::SystemTime};
 
 use crate::{
     environment::Environment,
@@ -13,8 +13,9 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Interpreter {
-    pub globals: Rc<RefCell<Environment>>,
+    globals: Rc<RefCell<Environment>>,
     environment: Rc<RefCell<Environment>>,
+    locals: HashMap<Expr, usize>,
 }
 
 impl Interpreter {
@@ -45,6 +46,7 @@ impl Interpreter {
         Self {
             environment: globals.clone(),
             globals,
+            locals: HashMap::new(),
         }
     }
 
@@ -60,6 +62,10 @@ impl Interpreter {
             }
         }
         Ok(())
+    }
+
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
+        self.locals.insert(expr.clone(), depth);
     }
 
     fn evaluate<E>(&mut self, expr: E) -> Result<Object, LoxError>
