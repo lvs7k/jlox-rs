@@ -66,7 +66,7 @@ impl Interpreter {
     where
         E: std::ops::Deref<Target = Expr>,
     {
-        expr.new_accept(self)
+        expr.accept(self)
     }
 
     fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>

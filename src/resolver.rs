@@ -1,13 +1,43 @@
+use std::collections::HashMap;
+
 use crate::{error::LoxError, expr::*, interpreter::Interpreter, stmt::*};
 
 #[derive(Debug)]
 pub struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
+    scopes: Vec<HashMap<String, bool>>,
 }
 
 impl<'a> Resolver<'a> {
     pub fn new(interpreter: &'a mut Interpreter) -> Self {
-        Self { interpreter }
+        Self {
+            interpreter,
+            scopes: vec![],
+        }
+    }
+
+    pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
+        for statement in statements {
+            self.resolve_stmt(statement);
+        }
+
+        Ok(())
+    }
+
+    fn resolve_stmt(&mut self, statement: &Stmt) -> Result<(), LoxError> {
+        statement.accept(self)
+    }
+
+    fn resolve_expr(&mut self, expr: &Expr) -> Result<(), LoxError> {
+        expr.accept(self)
+    }
+
+    fn begin_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    fn end_scope(&mut self) {
+        self.scopes.pop();
     }
 }
 
@@ -25,7 +55,11 @@ impl<'a> StmtVisitor<Result<(), LoxError>> for Resolver<'a> {
     }
 
     fn visit_block_stmt(&mut self, stmt: &StmtBlock) -> Result<(), LoxError> {
-        todo!();
+        self.begin_scope();
+        self.resolve(&stmt.statements);
+        self.end_scope();
+
+        Ok(())
     }
 
     fn visit_if_stmt(&mut self, stmt: &StmtIf) -> Result<(), LoxError> {

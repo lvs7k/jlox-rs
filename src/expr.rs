@@ -24,7 +24,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn new_accept<V, R>(&self, visitor: &mut V) -> R
+    pub fn accept<V, R>(&self, visitor: &mut V) -> R
     where
         V: ExprVisitor<R>,
     {

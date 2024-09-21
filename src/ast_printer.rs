@@ -9,7 +9,7 @@ pub struct AstPrinter;
 
 impl AstPrinter {
     pub fn print(&mut self, expr: &Expr) -> String {
-        expr.new_accept(self)
+        expr.accept(self)
     }
 
     fn parenthesize<E>(&mut self, name: &str, exprs: &[E]) -> String
@@ -22,7 +22,7 @@ impl AstPrinter {
         builder.push_str(name);
         for expr in exprs {
             builder.push(' ');
-            builder.push_str(&expr.new_accept(self));
+            builder.push_str(&expr.accept(self));
         }
         builder.push(')');
 
