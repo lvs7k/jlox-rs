@@ -16,6 +16,7 @@ mod token_type;
 use error::LoxError;
 use interpreter::Interpreter;
 use parser::Parser;
+use resolver::Resolver;
 use scanner::Scanner;
 
 pub fn run(source: &str, interpreter: &mut Interpreter) -> Result<(), LoxError> {
@@ -24,6 +25,9 @@ pub fn run(source: &str, interpreter: &mut Interpreter) -> Result<(), LoxError> 
 
     let mut parser = Parser::new(tokens);
     let statements = parser.parse()?;
+
+    let mut resolver = Resolver::new(interpreter);
+    resolver.resolve(&statements)?;
 
     interpreter.interpret(&statements)?;
 
