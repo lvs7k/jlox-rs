@@ -165,7 +165,9 @@ impl<'a> ExprVisitor<Result<(), LoxError>> for Resolver<'a> {
     }
 
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<(), LoxError> {
-        todo!();
+        self.resolve_expr(&expr.value)?;
+        self.resolve_local(&Expr::Assign(expr.clone()), &expr.name)?;
+        Ok(())
     }
 
     fn visit_logical_expr(&mut self, expr: &ExprLogical) -> Result<(), LoxError> {
