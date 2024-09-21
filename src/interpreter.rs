@@ -202,10 +202,19 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<Object, LoxError> {
         let value = self.evaluate(&*expr.value)?;
-        self.environment
-            .as_ref()
-            .borrow_mut()
-            .assign(&expr.name, value.clone())?;
+
+        if let Some(distance) = self.locals.get(&Expr::Assign(expr.clone())) {
+            self.environment
+                .as_ref()
+                .borrow_mut()
+                .assign_at(*distance, &expr.name, value.clone());
+        } else {
+            self.globals
+                .as_ref()
+                .borrow_mut()
+                .assign(&expr.name, value.clone())?
+        }
+
         Ok(value)
     }
 

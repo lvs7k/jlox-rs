@@ -67,6 +67,13 @@ impl Environment {
             .clone()
     }
 
+    pub fn assign_at(&mut self, distance: usize, name: &Token, value: Object) {
+        self.ancestor(distance)
+            .borrow_mut()
+            .values
+            .insert(name.lexeme.to_string(), value);
+    }
+
     fn ancestor(&self, distance: usize) -> Rc<RefCell<Environment>> {
         assert!(distance > 0);
 
