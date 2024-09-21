@@ -12,6 +12,7 @@ use crate::{
 pub struct Resolver<'a> {
     interpreter: &'a mut Interpreter,
     scopes: Vec<HashMap<String, bool>>,
+    current_function: FunctionType,
     had_error: bool,
 }
 
@@ -20,6 +21,7 @@ impl<'a> Resolver<'a> {
         Self {
             interpreter,
             scopes: vec![],
+            current_function: FunctionType::None,
             had_error: false,
         }
     }
@@ -66,6 +68,12 @@ impl<'a> Resolver<'a> {
         }
 
         let scope = self.scopes.last_mut().unwrap();
+
+        if scope.contains_key(&name.lexeme) {
+            error::lox_error_token(name, "Already a variable with this name in this scope.");
+            self.had_error = true;
+        }
+
         scope.insert(name.lexeme.to_string(), false);
     }
 
@@ -89,7 +97,10 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    fn resolve_function(&mut self, function: &StmtFunction) {
+    fn resolve_function(&mut self, function: &StmtFunction, ftype: FunctionType) {
+        let enclosing_function = self.current_function;
+        self.current_function = ftype;
+
         self.begin_scope();
 
         for param in &function.params {
@@ -99,6 +110,8 @@ impl<'a> Resolver<'a> {
 
         self.resolve_stmts(&function.body);
         self.end_scope();
+
+        self.current_function = enclosing_function;
     }
 }
 
@@ -144,10 +157,15 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         self.declare(&stmt.name);
         self.define(&stmt.name);
 
-        self.resolve_function(stmt);
+        self.resolve_function(stmt, FunctionType::Function);
     }
 
     fn visit_return_stmt(&mut self, stmt: &StmtReturn) {
+        if self.current_function == FunctionType::None {
+            error::lox_error_token(&stmt.keyword, "Can't return from top-level code.");
+            self.had_error = true;
+        }
+
         if let Some(ref value) = stmt.value {
             self.resolve_expr(value);
         }
@@ -174,7 +192,7 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
         if !self.scopes.is_empty()
             && matches!(
                 self.scopes.last_mut().unwrap().get(&expr.name.lexeme),
-                None | Some(false)
+                Some(&false)
             )
         {
             error::lox_error_token(
@@ -204,4 +222,10 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
             self.resolve_expr(argument);
         }
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FunctionType {
+    None,
+    Function,
 }
