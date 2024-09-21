@@ -4,6 +4,7 @@ use crate::{object::Object, token::Token, token_type::TokenType};
 pub enum LoxError {
     ScanError,
     ParseError,
+    ResolveError,
     RuntimeError(Token, String),
     Return(Object),
 }

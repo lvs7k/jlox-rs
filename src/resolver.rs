@@ -24,12 +24,18 @@ impl<'a> Resolver<'a> {
         }
     }
 
-    pub fn resolve(&mut self, statements: &[Stmt]) {
+    pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
         self.had_error = false;
 
         for statement in statements {
             self.resolve_stmt(statement);
         }
+
+        if self.had_error {
+            return Err(LoxError::ResolveError);
+        }
+
+        Ok(())
     }
 
     fn resolve_stmt(&mut self, statement: &Stmt) {
@@ -92,11 +98,11 @@ impl<'a> Resolver<'a> {
 
 impl<'a> StmtVisitor<()> for Resolver<'a> {
     fn visit_expression_stmt(&mut self, stmt: &StmtExpression) {
-        todo!();
+        self.resolve_expr(&stmt.expression);
     }
 
     fn visit_print_stmt(&mut self, stmt: &StmtPrint) {
-        todo!();
+        self.resolve_expr(&stmt.expression);
     }
 
     fn visit_var_stmt(&mut self, stmt: &StmtVar) {
@@ -116,11 +122,16 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
     }
 
     fn visit_if_stmt(&mut self, stmt: &StmtIf) {
-        todo!();
+        self.resolve_expr(&stmt.condition);
+        self.resolve_stmt(&stmt.then_branch);
+        if let Some(ref else_branch) = stmt.else_branch {
+            self.resolve_stmt(else_branch);
+        }
     }
 
     fn visit_while_stmt(&mut self, stmt: &StmtWhile) {
-        todo!();
+        self.resolve_expr(&stmt.condition);
+        self.resolve_stmt(&stmt.body);
     }
 
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) {
@@ -131,25 +142,26 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
     }
 
     fn visit_return_stmt(&mut self, stmt: &StmtReturn) {
-        todo!();
+        if let Some(ref value) = stmt.value {
+            self.resolve_expr(value);
+        }
     }
 }
 
 impl<'a> ExprVisitor<()> for Resolver<'a> {
-    fn visit_literal_expr(&mut self, expr: &ExprLiteral) {
-        todo!();
-    }
+    fn visit_literal_expr(&mut self, _expr: &ExprLiteral) {}
 
     fn visit_unary_expr(&mut self, expr: &ExprUnary) {
-        todo!();
+        self.resolve_expr(&expr.right);
     }
 
     fn visit_binary_expr(&mut self, expr: &ExprBinary) {
-        todo!();
+        self.resolve_expr(&expr.left);
+        self.resolve_expr(&expr.right);
     }
 
     fn visit_grouping_expr(&mut self, expr: &ExprGrouping) {
-        todo!();
+        self.resolve_expr(&expr.expression);
     }
 
     fn visit_variable_expr(&mut self, expr: &ExprVariable) {
@@ -175,10 +187,15 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     }
 
     fn visit_logical_expr(&mut self, expr: &ExprLogical) {
-        todo!();
+        self.resolve_expr(&expr.left);
+        self.resolve_expr(&expr.right);
     }
 
     fn visit_call_expr(&mut self, expr: &ExprCall) {
-        todo!();
+        self.resolve_expr(&expr.callee);
+
+        for argument in &expr.arguments {
+            self.resolve_expr(argument);
+        }
     }
 }
