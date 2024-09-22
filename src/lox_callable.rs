@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment, error::LoxError, interpreter::Interpreter, object::Object, stmt::*,
@@ -54,13 +54,19 @@ impl LoxCallable for CallableKind {
 pub struct LoxFunction {
     declaration: StmtFunction,
     closure: Rc<RefCell<Environment>>,
+    is_initializer: bool,
 }
 
 impl LoxFunction {
-    pub fn new(declaration: StmtFunction, closure: Rc<RefCell<Environment>>) -> Self {
+    pub fn new(
+        declaration: StmtFunction,
+        closure: Rc<RefCell<Environment>>,
+        is_initializer: bool,
+    ) -> Self {
         Self {
             declaration,
             closure,
+            is_initializer,
         }
     }
 
@@ -69,7 +75,11 @@ impl LoxFunction {
 
         environment.define("this".to_string(), Object::Instance(instance));
 
-        LoxFunction::new(self.declaration, Rc::new(RefCell::new(environment)))
+        LoxFunction::new(
+            self.declaration,
+            Rc::new(RefCell::new(environment)),
+            self.is_initializer,
+        )
     }
 }
 
@@ -95,6 +105,10 @@ impl LoxCallable for LoxFunction {
             interpreter.execute_block(&self.declaration.body, Rc::new(RefCell::new(environment)))
         {
             return Ok(return_value);
+        }
+
+        if self.is_initializer {
+            return Ok(self.closure.as_ref().borrow().get_at(0, "this"));
         }
 
         Ok(Object::Null)

@@ -371,7 +371,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     }
 
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> Result<(), LoxError> {
-        let function = LoxFunction::new(stmt.clone(), self.environment.clone());
+        let function = LoxFunction::new(stmt.clone(), self.environment.clone(), false);
         self.environment.as_ref().borrow_mut().define(
             stmt.name.lexeme.clone(),
             Object::Callable(CallableKind::Function(function)),
@@ -404,7 +404,11 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
                 _ => panic!("StmtClass.methods must contain StmtFunction only."),
             };
 
-            let function = LoxFunction::new(stmt_function.clone(), self.environment.clone());
+            let function = LoxFunction::new(
+                stmt_function.clone(),
+                self.environment.clone(),
+                stmt_function.name.lexeme == "init",
+            );
 
             methods.insert(stmt_function.name.lexeme.to_string(), function);
         }
