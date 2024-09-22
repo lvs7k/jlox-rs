@@ -281,7 +281,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         let value = self.evaluate(&expr.value)?;
 
-        if let Object::Callable(CallableKind::Instance(instance)) = object {
+        if let Object::Callable(CallableKind::Instance(mut instance)) = object {
             instance.set(expr.name.clone(), value.clone());
         }
 
@@ -392,7 +392,20 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             .borrow_mut()
             .define(stmt.name.lexeme.to_string(), Object::Null);
 
-        let klass = LoxClass::new(stmt.name.lexeme.clone());
+        let mut methods = HashMap::<String, LoxFunction>::new();
+
+        for method in &stmt.methods {
+            let stmt_function = match method {
+                Stmt::Function(stmt_function) => stmt_function,
+                _ => panic!("StmtClass.methods must contain StmtFunction only."),
+            };
+
+            let function = LoxFunction::new(stmt_function.clone(), self.environment.clone());
+
+            methods.insert(stmt_function.name.lexeme.to_string(), function);
+        }
+
+        let klass = LoxClass::new(stmt.name.lexeme.to_string(), methods);
 
         self.environment
             .as_ref()

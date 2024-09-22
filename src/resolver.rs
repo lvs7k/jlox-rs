@@ -174,6 +174,16 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
     fn visit_class_stmt(&mut self, stmt: &StmtClass) {
         self.declare(&stmt.name);
         self.define(&stmt.name);
+
+        for method in &stmt.methods {
+            let declaration = FunctionType::Method;
+
+            if let Stmt::Function(function) = method {
+                self.resolve_function(function, declaration);
+            } else {
+                panic!("StmtClass.methods must contain Stmt::Function only.");
+            }
+        }
     }
 }
 
@@ -242,4 +252,5 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
 enum FunctionType {
     None,
     Function,
+    Method,
 }

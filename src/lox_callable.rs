@@ -139,13 +139,19 @@ impl LoxCallable for NativeFunction {
 #[derive(Debug, Clone)]
 pub struct LoxClass {
     name: Rc<String>,
+    methods: Rc<RefCell<HashMap<String, LoxFunction>>>,
 }
 
 impl LoxClass {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> Self {
         Self {
             name: Rc::new(name),
+            methods: Rc::new(RefCell::new(methods)),
         }
+    }
+
+    fn find_method(&self, name: &str) -> Option<LoxFunction> {
+        self.methods.as_ref().borrow().get(name).cloned()
     }
 }
 
@@ -158,8 +164,8 @@ impl std::fmt::Display for LoxClass {
 impl LoxCallable for LoxClass {
     fn call(
         &self,
-        interpreter: &mut Interpreter,
-        arguments: &[Object],
+        _interpreter: &mut Interpreter,
+        _arguments: &[Object],
     ) -> Result<Object, LoxError> {
         let instance = LoxInstance::new(self.clone());
         Ok(Object::Callable(CallableKind::Instance(instance)))
@@ -184,9 +190,14 @@ impl LoxInstance {
         }
     }
 
-    pub fn get(&self, name: &Token) -> Result<&Object, LoxError> {
+    pub fn get(&self, name: &Token) -> Result<Object, LoxError> {
         if let Some(field) = self.fields.get(&name.lexeme) {
-            return Ok(field);
+            return Ok(field.clone());
+        }
+
+        if let Some(method) = self.klass.find_method(&name.lexeme) {
+            let obj = Object::Callable(CallableKind::Function(method));
+            return Ok(obj);
         }
 
         Err(LoxError::RuntimeError(
