@@ -403,6 +403,11 @@ impl Parser {
         loop {
             if self.match_tokentype(&[TokenType::LeftParen]) {
                 expr = self.finish_call(expr)?;
+            } else if self.match_tokentype(&[TokenType::Dot]) {
+                let name = self
+                    .consume(TokenType::Identifier, "Expect property name after '.'.")?
+                    .clone();
+                expr = Expr::new_get(expr, name);
             } else {
                 break;
             }

@@ -68,18 +68,15 @@ impl Interpreter {
         self.locals.insert(expr.clone(), depth);
     }
 
-    pub fn execute_block<S>(
+    pub fn execute_block(
         &mut self,
-        statements: S,
+        statements: &Vec<Stmt>,
         environment: Rc<RefCell<Environment>>,
-    ) -> Result<(), LoxError>
-    where
-        S: std::ops::Deref<Target = Vec<Stmt>>,
-    {
+    ) -> Result<(), LoxError> {
         let previous = self.environment.clone();
         self.environment = environment;
 
-        for statement in &*statements {
+        for statement in statements {
             if let Err(e) = self.execute(statement) {
                 self.environment = previous;
                 return Err(e);
@@ -90,17 +87,11 @@ impl Interpreter {
         Ok(())
     }
 
-    fn evaluate<E>(&mut self, expr: E) -> Result<Object, LoxError>
-    where
-        E: std::ops::Deref<Target = Expr>,
-    {
+    fn evaluate(&mut self, expr: &Expr) -> Result<Object, LoxError> {
         expr.accept(self)
     }
 
-    fn execute<S>(&mut self, stmt: S) -> Result<(), LoxError>
-    where
-        S: std::ops::Deref<Target = Stmt>,
-    {
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), LoxError> {
         stmt.accept(self)
     }
 
@@ -129,7 +120,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_unary_expr(&mut self, expr: &ExprUnary) -> Result<Object, LoxError> {
-        let right = self.evaluate(&*expr.right)?;
+        let right = self.evaluate(&expr.right)?;
 
         match expr.operator.typ {
             TokenType::Bang => Ok(!right),
@@ -142,8 +133,8 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_binary_expr(&mut self, expr: &ExprBinary) -> Result<Object, LoxError> {
-        let left = self.evaluate(&*expr.left)?;
-        let right = self.evaluate(&*expr.right)?;
+        let left = self.evaluate(&expr.left)?;
+        let right = self.evaluate(&expr.right)?;
 
         match expr.operator.typ {
             TokenType::Greater => {
@@ -193,7 +184,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_grouping_expr(&mut self, expr: &ExprGrouping) -> Result<Object, LoxError> {
-        self.evaluate(&*expr.expression)
+        self.evaluate(&expr.expression)
     }
 
     fn visit_variable_expr(&mut self, expr: &ExprVariable) -> Result<Object, LoxError> {
@@ -201,7 +192,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> Result<Object, LoxError> {
-        let value = self.evaluate(&*expr.value)?;
+        let value = self.evaluate(&expr.value)?;
 
         if let Some(distance) = self.locals.get(&Expr::Assign(expr.clone())) {
             self.environment
@@ -219,7 +210,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_logical_expr(&mut self, expr: &ExprLogical) -> Result<Object, LoxError> {
-        let left = self.evaluate(&*expr.left)?;
+        let left = self.evaluate(&expr.left)?;
 
         if expr.operator.typ == TokenType::Or {
             if left.is_truthy() {
@@ -229,11 +220,11 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             return Ok(left);
         }
 
-        self.evaluate(&*expr.right)
+        self.evaluate(&expr.right)
     }
 
     fn visit_call_expr(&mut self, expr: &ExprCall) -> Result<Object, LoxError> {
-        let callee = self.evaluate(&*expr.callee)?;
+        let callee = self.evaluate(&expr.callee)?;
 
         let mut arguments = vec![];
         for argument in &expr.arguments {
@@ -262,6 +253,20 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
         }
 
         function.call(self, &arguments)
+    }
+
+    fn visit_get_expr(&mut self, expr: &ExprGet) -> Result<Object, LoxError> {
+        let object = self.evaluate(&expr.object)?;
+
+        if let Object::Callable(CallableKind::Instance(instance)) = object {
+            let obj = instance.get(&expr.name)?;
+            return Ok(obj.clone());
+        }
+
+        Err(LoxError::RuntimeError(
+            expr.name.clone(),
+            "Only instances have properties.".to_string(),
+        ))
     }
 }
 
@@ -326,9 +331,9 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
 
     fn visit_if_stmt(&mut self, stmt: &StmtIf) -> Result<(), LoxError> {
         if self.evaluate(&stmt.condition)?.is_truthy() {
-            self.execute(&*stmt.then_branch)?;
+            self.execute(&stmt.then_branch)?;
         } else if let Some(ref else_branch) = stmt.else_branch {
-            self.execute(&**else_branch)?;
+            self.execute(else_branch)?;
         }
 
         Ok(())
@@ -336,7 +341,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
 
     fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> Result<(), LoxError> {
         while self.evaluate(&stmt.condition)?.is_truthy() {
-            self.execute(&*stmt.body)?;
+            self.execute(&stmt.body)?;
         }
 
         Ok(())

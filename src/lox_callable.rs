@@ -1,7 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment, error::LoxError, interpreter::Interpreter, object::Object, stmt::*,
+    token::Token,
 };
 
 pub trait LoxCallable {
@@ -172,11 +173,26 @@ impl LoxCallable for LoxClass {
 #[derive(Debug, Clone)]
 pub struct LoxInstance {
     klass: LoxClass,
+    fields: HashMap<String, Object>,
 }
 
 impl LoxInstance {
     pub fn new(klass: LoxClass) -> Self {
-        Self { klass }
+        Self {
+            klass,
+            fields: HashMap::new(),
+        }
+    }
+
+    pub fn get(&self, name: &Token) -> Result<&Object, LoxError> {
+        if let Some(field) = self.fields.get(&name.lexeme) {
+            return Ok(field);
+        }
+
+        Err(LoxError::RuntimeError(
+            name.clone(),
+            format!("Undefined property '{}'.", name.lexeme),
+        ))
     }
 }
 

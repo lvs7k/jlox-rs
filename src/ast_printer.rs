@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use std::ops::Deref;
-
 use crate::expr::*;
 
 #[derive(Debug)]
@@ -12,10 +10,7 @@ impl AstPrinter {
         expr.accept(self)
     }
 
-    fn parenthesize<E>(&mut self, name: &str, exprs: &[E]) -> String
-    where
-        E: Deref<Target = Expr>,
-    {
+    fn parenthesize(&mut self, name: &str, exprs: &[&Expr]) -> String {
         let mut builder = String::new();
 
         builder.push('(');
@@ -60,6 +55,10 @@ impl ExprVisitor<String> for AstPrinter {
     }
 
     fn visit_call_expr(&mut self, _expr: &ExprCall) -> String {
+        unimplemented!();
+    }
+
+    fn visit_get_expr(&mut self, _expr: &ExprGet) -> String {
         unimplemented!();
     }
 }

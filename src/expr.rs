@@ -11,6 +11,7 @@ pub trait ExprVisitor<R> {
     fn visit_assign_expr(&mut self, expr: &ExprAssign) -> R;
     fn visit_logical_expr(&mut self, expr: &ExprLogical) -> R;
     fn visit_call_expr(&mut self, expr: &ExprCall) -> R;
+    fn visit_get_expr(&mut self, expr: &ExprGet) -> R;
 }
 
 #[derive(Debug, Clone)]
@@ -23,6 +24,7 @@ pub enum Expr {
     Assign(ExprAssign),
     Logical(ExprLogical),
     Call(ExprCall),
+    Get(ExprGet),
 }
 
 impl Expr {
@@ -39,6 +41,7 @@ impl Expr {
             Expr::Assign(ref expr) => visitor.visit_assign_expr(expr),
             Expr::Logical(ref expr) => visitor.visit_logical_expr(expr),
             Expr::Call(ref expr) => visitor.visit_call_expr(expr),
+            Expr::Get(ref expr) => visitor.visit_get_expr(expr),
         }
     }
 
@@ -105,6 +108,14 @@ impl Expr {
             arguments,
         })
     }
+
+    pub fn new_get(object: Expr, name: Token) -> Self {
+        Self::Get(ExprGet {
+            id: Uuid::new_v4(),
+            object: Box::new(object),
+            name,
+        })
+    }
 }
 
 impl PartialEq for Expr {
@@ -118,6 +129,7 @@ impl PartialEq for Expr {
             (Expr::Assign(l), Self::Assign(r)) => l.id == r.id,
             (Expr::Logical(l), Self::Logical(r)) => l.id == r.id,
             (Expr::Call(l), Self::Call(r)) => l.id == r.id,
+            (Expr::Get(l), Self::Get(r)) => l.id == r.id,
             _ => false,
         }
     }
@@ -136,6 +148,7 @@ impl std::hash::Hash for Expr {
             Expr::Assign(e) => e.id.hash(state),
             Expr::Logical(e) => e.id.hash(state),
             Expr::Call(e) => e.id.hash(state),
+            Expr::Get(e) => e.id.hash(state),
         }
     }
 }
@@ -194,4 +207,11 @@ pub struct ExprCall {
     pub callee: Box<Expr>,
     pub paren: Token,
     pub arguments: Vec<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExprGet {
+    id: Uuid,
+    pub object: Box<Expr>,
+    pub name: Token,
 }
