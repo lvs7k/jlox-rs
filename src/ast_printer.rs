@@ -61,6 +61,10 @@ impl ExprVisitor<String> for AstPrinter {
     fn visit_get_expr(&mut self, _expr: &ExprGet) -> String {
         unimplemented!();
     }
+
+    fn visit_set_expr(&mut self, _expr: &ExprSet) -> String {
+        unimplemented!();
+    }
 }
 
 #[cfg(test)]

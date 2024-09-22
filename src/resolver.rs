@@ -231,6 +231,11 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     fn visit_get_expr(&mut self, expr: &ExprGet) {
         self.resolve_expr(&expr.object);
     }
+
+    fn visit_set_expr(&mut self, expr: &ExprSet) {
+        self.resolve_expr(&expr.value);
+        self.resolve_expr(&expr.object);
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

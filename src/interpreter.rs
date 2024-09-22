@@ -268,6 +268,25 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
             "Only instances have properties.".to_string(),
         ))
     }
+
+    fn visit_set_expr(&mut self, expr: &ExprSet) -> Result<Object, LoxError> {
+        let object = self.evaluate(&expr.object)?;
+
+        if !matches!(object, Object::Callable(CallableKind::Instance(_))) {
+            return Err(LoxError::RuntimeError(
+                expr.name.clone(),
+                "Only instances have fields.".to_string(),
+            ));
+        }
+
+        let value = self.evaluate(&expr.value)?;
+
+        if let Object::Callable(CallableKind::Instance(instance)) = object {
+            instance.set(expr.name.clone(), value.clone());
+        }
+
+        Ok(value)
+    }
 }
 
 fn check_number_operand(operator: &Token, operand: &Object) -> Result<(), LoxError> {

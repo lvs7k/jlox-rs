@@ -296,6 +296,8 @@ impl Parser {
             if let Expr::Variable(var) = expr {
                 let name = var.name;
                 return Ok(Expr::new_assign(name, value));
+            } else if let Expr::Get(get) = expr {
+                return Ok(Expr::new_set(*get.object, get.name, value));
             }
 
             error::lox_error_token(&equals, "Invalid assignment target.");

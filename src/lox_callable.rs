@@ -194,6 +194,10 @@ impl LoxInstance {
             format!("Undefined property '{}'.", name.lexeme),
         ))
     }
+
+    pub fn set(&mut self, name: Token, value: Object) {
+        self.fields.insert(name.lexeme, value);
+    }
 }
 
 impl std::fmt::Display for LoxInstance {
