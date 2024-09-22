@@ -16,7 +16,6 @@ pub enum CallableKind {
     Function(LoxFunction),
     Native(NativeFunction),
     Class(LoxClass),
-    Instance(LoxInstance),
 }
 
 impl std::fmt::Display for CallableKind {
@@ -25,7 +24,6 @@ impl std::fmt::Display for CallableKind {
             Self::Function(callable) => write!(f, "{}", callable),
             Self::Native(callable) => write!(f, "{}", callable),
             Self::Class(callable) => write!(f, "{}", callable),
-            Self::Instance(callable) => write!(f, "{}", callable),
         }
     }
 }
@@ -40,7 +38,6 @@ impl LoxCallable for CallableKind {
             Self::Function(callable) => callable.call(interpreter, arguments),
             Self::Native(callable) => callable.call(interpreter, arguments),
             Self::Class(callable) => callable.call(interpreter, arguments),
-            Self::Instance(callable) => callable.call(interpreter, arguments),
         }
     }
 
@@ -49,7 +46,6 @@ impl LoxCallable for CallableKind {
             Self::Function(callable) => callable.arity(),
             Self::Native(callable) => callable.arity(),
             Self::Class(callable) => callable.arity(),
-            Self::Instance(callable) => callable.arity(),
         }
     }
 }
@@ -168,7 +164,7 @@ impl LoxCallable for LoxClass {
         _arguments: &[Object],
     ) -> Result<Object, LoxError> {
         let instance = LoxInstance::new(self.clone());
-        Ok(Object::Callable(CallableKind::Instance(instance)))
+        Ok(Object::Instance(instance))
     }
 
     fn arity(&self) -> usize {
@@ -176,6 +172,7 @@ impl LoxCallable for LoxClass {
     }
 }
 
+// LoxInstance is not CallableKind, but we will place it here.
 #[derive(Debug, Clone)]
 pub struct LoxInstance {
     klass: LoxClass,
@@ -214,19 +211,5 @@ impl LoxInstance {
 impl std::fmt::Display for LoxInstance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} instance", &self.klass.name)
-    }
-}
-
-impl LoxCallable for LoxInstance {
-    fn call(
-        &self,
-        interpreter: &mut Interpreter,
-        arguments: &[Object],
-    ) -> Result<Object, LoxError> {
-        todo!();
-    }
-
-    fn arity(&self) -> usize {
-        todo!();
     }
 }

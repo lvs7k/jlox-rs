@@ -258,7 +258,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     fn visit_get_expr(&mut self, expr: &ExprGet) -> Result<Object, LoxError> {
         let object = self.evaluate(&expr.object)?;
 
-        if let Object::Callable(CallableKind::Instance(instance)) = object {
+        if let Object::Instance(instance) = object {
             let obj = instance.get(&expr.name)?;
             return Ok(obj.clone());
         }
@@ -272,7 +272,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     fn visit_set_expr(&mut self, expr: &ExprSet) -> Result<Object, LoxError> {
         let object = self.evaluate(&expr.object)?;
 
-        if !matches!(object, Object::Callable(CallableKind::Instance(_))) {
+        if !matches!(object, Object::Instance(_)) {
             return Err(LoxError::RuntimeError(
                 expr.name.clone(),
                 "Only instances have fields.".to_string(),
@@ -281,7 +281,7 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         let value = self.evaluate(&expr.value)?;
 
-        if let Object::Callable(CallableKind::Instance(mut instance)) = object {
+        if let Object::Instance(mut instance) = object {
             instance.set(expr.name.clone(), value.clone());
         }
 

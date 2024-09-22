@@ -1,4 +1,4 @@
-use crate::lox_callable::CallableKind;
+use crate::lox_callable::{CallableKind, LoxInstance};
 
 #[derive(Debug, Clone)]
 pub enum Object {
@@ -7,6 +7,7 @@ pub enum Object {
     Str(String),
     Null,
     Callable(CallableKind),
+    Instance(LoxInstance),
 }
 
 impl Object {
@@ -49,6 +50,7 @@ impl std::fmt::Display for Object {
             Self::Str(v) => write!(f, "{}", v),
             Self::Null => write!(f, "nil"),
             Self::Callable(v) => write!(f, "{}", v),
+            Self::Instance(v) => write!(f, "{}", v),
         }
     }
 }
