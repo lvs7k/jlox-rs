@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc, time::SystemTime};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, time::SystemTime};
 
 use crate::{
     environment::Environment,
@@ -373,7 +373,7 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
         self.environment
             .as_ref()
             .borrow_mut()
-            .assign(&stmt.name, klass);
+            .assign(&stmt.name, Object::Callable(CallableKind::Class(klass)))?;
 
         Ok(())
     }
