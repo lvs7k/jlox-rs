@@ -168,14 +168,25 @@ impl std::fmt::Display for LoxClass {
 impl LoxCallable for LoxClass {
     fn call(
         &self,
-        _interpreter: &mut Interpreter,
-        _arguments: &[Object],
+        interpreter: &mut Interpreter,
+        arguments: &[Object],
     ) -> Result<Object, LoxError> {
         let instance = LoxInstance::new(self.clone());
+
+        if let Some(initializer) = self.find_method("init") {
+            initializer
+                .bind(instance.clone())
+                .call(interpreter, arguments)?;
+        }
+
         Ok(Object::Instance(instance))
     }
 
     fn arity(&self) -> usize {
+        if let Some(initializer) = self.find_method("init") {
+            return initializer.arity();
+        }
+
         0
     }
 }
