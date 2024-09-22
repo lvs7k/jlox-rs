@@ -9,6 +9,7 @@ pub trait StmtVisitor<R> {
     fn visit_while_stmt(&mut self, stmt: &StmtWhile) -> R;
     fn visit_function_stmt(&mut self, stmt: &StmtFunction) -> R;
     fn visit_return_stmt(&mut self, stmt: &StmtReturn) -> R;
+    fn visit_class_stmt(&mut self, stmt: &StmtClass) -> R;
 }
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,7 @@ pub enum Stmt {
     While(StmtWhile),
     Function(StmtFunction),
     Return(StmtReturn),
+    Class(StmtClass),
 }
 
 impl Stmt {
@@ -37,6 +39,7 @@ impl Stmt {
             Stmt::While(ref stmt) => visitor.visit_while_stmt(stmt),
             Stmt::Function(ref stmt) => visitor.visit_function_stmt(stmt),
             Stmt::Return(ref stmt) => visitor.visit_return_stmt(stmt),
+            Stmt::Class(ref stmt) => visitor.visit_class_stmt(stmt),
         }
     }
 
@@ -74,6 +77,10 @@ impl Stmt {
 
     pub fn new_return(keyword: Token, value: Option<Expr>) -> Self {
         Self::Return(StmtReturn { keyword, value })
+    }
+
+    pub fn new_class(name: Token, methods: Vec<Stmt>) -> Self {
+        Self::Class(StmtClass { name, methods })
     }
 }
 
@@ -122,4 +129,10 @@ pub struct StmtFunction {
 pub struct StmtReturn {
     pub keyword: Token,
     pub value: Option<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StmtClass {
+    pub name: Token,
+    pub methods: Vec<Stmt>,
 }

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc, time::SystemTime};
+use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc, time::SystemTime};
 
 use crate::{
     environment::Environment,
@@ -360,6 +360,22 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
         }
 
         Err(LoxError::Return(value))
+    }
+
+    fn visit_class_stmt(&mut self, stmt: &StmtClass) -> Result<(), LoxError> {
+        self.environment
+            .as_ref()
+            .borrow_mut()
+            .define(stmt.name.lexeme.to_string(), Object::Null);
+
+        let klass = LoxClass::new(stmt.name.lexeme.clone());
+
+        self.environment
+            .as_ref()
+            .borrow_mut()
+            .assign(&stmt.name, klass);
+
+        Ok(())
     }
 }
 

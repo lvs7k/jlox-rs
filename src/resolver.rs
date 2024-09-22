@@ -170,6 +170,11 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
             self.resolve_expr(value);
         }
     }
+
+    fn visit_class_stmt(&mut self, stmt: &StmtClass) {
+        self.declare(&stmt.name);
+        self.define(&stmt.name);
+    }
 }
 
 impl<'a> ExprVisitor<()> for Resolver<'a> {
