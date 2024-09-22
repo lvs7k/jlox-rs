@@ -63,6 +63,14 @@ impl LoxFunction {
             closure,
         }
     }
+
+    pub fn bind(self, instance: LoxInstance) -> LoxFunction {
+        let mut environment = Environment::new(Some(self.closure.clone()));
+
+        environment.define("this".to_string(), Object::Instance(instance));
+
+        LoxFunction::new(self.declaration, Rc::new(RefCell::new(environment)))
+    }
 }
 
 impl std::fmt::Display for LoxFunction {
@@ -176,25 +184,25 @@ impl LoxCallable for LoxClass {
 #[derive(Debug, Clone)]
 pub struct LoxInstance {
     klass: LoxClass,
-    fields: HashMap<String, Object>,
+    fields: Rc<RefCell<HashMap<String, Object>>>,
 }
 
 impl LoxInstance {
     pub fn new(klass: LoxClass) -> Self {
         Self {
             klass,
-            fields: HashMap::new(),
+            fields: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 
     pub fn get(&self, name: &Token) -> Result<Object, LoxError> {
-        if let Some(field) = self.fields.get(&name.lexeme) {
+        if let Some(field) = self.fields.borrow().get(&name.lexeme) {
             return Ok(field.clone());
         }
 
         if let Some(method) = self.klass.find_method(&name.lexeme) {
-            let obj = Object::Callable(CallableKind::Function(method));
-            return Ok(obj);
+            let function = method.bind(self.clone());
+            return Ok(Object::Callable(CallableKind::Function(function)));
         }
 
         Err(LoxError::RuntimeError(
@@ -204,7 +212,7 @@ impl LoxInstance {
     }
 
     pub fn set(&mut self, name: Token, value: Object) {
-        self.fields.insert(name.lexeme, value);
+        self.fields.borrow_mut().insert(name.lexeme, value);
     }
 }
 

@@ -287,6 +287,10 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
 
         Ok(value)
     }
+
+    fn visit_this_expr(&mut self, expr: &ExprThis) -> Result<Object, LoxError> {
+        self.look_up_variable(&expr.keyword, &Expr::This(expr.clone()))
+    }
 }
 
 fn check_number_operand(operator: &Token, operand: &Object) -> Result<(), LoxError> {

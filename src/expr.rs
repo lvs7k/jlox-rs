@@ -13,6 +13,7 @@ pub trait ExprVisitor<R> {
     fn visit_call_expr(&mut self, expr: &ExprCall) -> R;
     fn visit_get_expr(&mut self, expr: &ExprGet) -> R;
     fn visit_set_expr(&mut self, expr: &ExprSet) -> R;
+    fn visit_this_expr(&mut self, expr: &ExprThis) -> R;
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +28,7 @@ pub enum Expr {
     Call(ExprCall),
     Get(ExprGet),
     Set(ExprSet),
+    This(ExprThis),
 }
 
 impl Expr {
@@ -45,6 +47,7 @@ impl Expr {
             Expr::Call(ref expr) => visitor.visit_call_expr(expr),
             Expr::Get(ref expr) => visitor.visit_get_expr(expr),
             Expr::Set(ref expr) => visitor.visit_set_expr(expr),
+            Expr::This(ref expr) => visitor.visit_this_expr(expr),
         }
     }
 
@@ -128,6 +131,13 @@ impl Expr {
             value: Box::new(value),
         })
     }
+
+    pub fn new_this(keyword: Token) -> Self {
+        Self::This(ExprThis {
+            id: Uuid::new_v4(),
+            keyword,
+        })
+    }
 }
 
 impl PartialEq for Expr {
@@ -142,6 +152,8 @@ impl PartialEq for Expr {
             (Expr::Logical(l), Self::Logical(r)) => l.id == r.id,
             (Expr::Call(l), Self::Call(r)) => l.id == r.id,
             (Expr::Get(l), Self::Get(r)) => l.id == r.id,
+            (Expr::Set(l), Self::Set(r)) => l.id == r.id,
+            (Expr::This(l), Self::This(r)) => l.id == r.id,
             _ => false,
         }
     }
@@ -162,6 +174,7 @@ impl std::hash::Hash for Expr {
             Expr::Call(e) => e.id.hash(state),
             Expr::Get(e) => e.id.hash(state),
             Expr::Set(e) => e.id.hash(state),
+            Expr::This(e) => e.id.hash(state),
         }
     }
 }
@@ -235,4 +248,10 @@ pub struct ExprSet {
     pub object: Box<Expr>,
     pub name: Token,
     pub value: Box<Expr>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExprThis {
+    id: Uuid,
+    pub keyword: Token,
 }

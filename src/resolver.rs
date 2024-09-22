@@ -175,6 +175,12 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         self.declare(&stmt.name);
         self.define(&stmt.name);
 
+        self.begin_scope();
+        self.scopes
+            .last_mut()
+            .unwrap()
+            .insert("this".to_string(), true);
+
         for method in &stmt.methods {
             let declaration = FunctionType::Method;
 
@@ -184,6 +190,8 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
                 panic!("StmtClass.methods must contain Stmt::Function only.");
             }
         }
+
+        self.end_scope();
     }
 }
 
@@ -245,6 +253,10 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     fn visit_set_expr(&mut self, expr: &ExprSet) {
         self.resolve_expr(&expr.value);
         self.resolve_expr(&expr.object);
+    }
+
+    fn visit_this_expr(&mut self, expr: &ExprThis) {
+        self.resolve_local(&Expr::This(expr.clone()), &expr.keyword);
     }
 }
 

@@ -461,6 +461,11 @@ impl Parser {
             return Ok(Expr::new_literal(self.previous().clone().literal));
         }
 
+        if self.match_tokentype(&[This]) {
+            let keyword = self.previous().clone();
+            return Ok(Expr::new_this(keyword));
+        }
+
         if self.match_tokentype(&[Identifier]) {
             let name = self.previous().clone();
             return Ok(Expr::new_variable(name));
