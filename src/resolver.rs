@@ -169,6 +169,11 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         }
 
         if let Some(ref value) = stmt.value {
+            if self.current_function == FunctionType::Initializer {
+                error::lox_error_token(&stmt.keyword, "Can't return a value from an initializer.");
+                self.had_error = true;
+            }
+
             self.resolve_expr(value);
         }
     }
@@ -187,9 +192,12 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
             .insert("this".to_string(), true);
 
         for method in &stmt.methods {
-            let declaration = FunctionType::Method;
+            let mut declaration = FunctionType::Method;
 
             if let Stmt::Function(function) = method {
+                if function.name.lexeme == "init" {
+                    declaration = FunctionType::Initializer;
+                }
                 self.resolve_function(function, declaration);
             } else {
                 panic!("StmtClass.methods must contain Stmt::Function only.");
@@ -277,6 +285,7 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
 enum FunctionType {
     None,
     Function,
+    Initializer,
     Method,
 }
 

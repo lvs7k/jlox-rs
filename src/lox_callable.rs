@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment, error::LoxError, interpreter::Interpreter, object::Object, stmt::*,
@@ -104,6 +104,11 @@ impl LoxCallable for LoxFunction {
         if let Err(LoxError::Return(return_value)) =
             interpreter.execute_block(&self.declaration.body, Rc::new(RefCell::new(environment)))
         {
+            if self.is_initializer {
+                let this = self.closure.as_ref().borrow_mut().get_at(0, "this");
+                return Ok(this);
+            }
+
             return Ok(return_value);
         }
 
@@ -221,7 +226,7 @@ impl LoxInstance {
     }
 
     pub fn get(&self, name: &Token) -> Result<Object, LoxError> {
-        if let Some(field) = self.fields.borrow().get(&name.lexeme) {
+        if let Some(field) = self.fields.as_ref().borrow().get(&name.lexeme) {
             return Ok(field.clone());
         }
 
