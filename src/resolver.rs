@@ -191,6 +191,7 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         }
 
         if let Some(ref superclass) = stmt.superclass {
+            self.current_class = ClassType::Subclass;
             self.resolve_expr(superclass);
         }
 
@@ -302,6 +303,19 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     }
 
     fn visit_super_expr(&mut self, expr: &ExprSuper) {
+        if self.current_class == ClassType::None {
+            error::lox_error_token(
+                &expr.keyword.clone(),
+                "Can't use 'super' outside of a class.",
+            );
+            self.had_error.set(true);
+        } else if self.current_class != ClassType::Subclass {
+            error::lox_error_token(
+                &expr.keyword,
+                "Can't use 'super' in a class with no superclass.",
+            );
+        }
+
         self.resolve_local(&Expr::Super(expr.clone()), &expr.keyword);
     }
 }
@@ -318,4 +332,5 @@ enum FunctionType {
 enum ClassType {
     None,
     Class,
+    Subclass,
 }
