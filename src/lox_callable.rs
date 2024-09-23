@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
     environment::Environment, error::LoxError, interpreter::Interpreter, object::Object, stmt::*,
@@ -180,7 +180,15 @@ impl LoxClass {
     }
 
     fn find_method(&self, name: &str) -> Option<LoxFunction> {
-        self.methods.as_ref().borrow().get(name).cloned()
+        if let Some(function) = self.methods.as_ref().borrow().get(name) {
+            return Some(function.clone());
+        }
+
+        if let Some(ref superclass) = self.superclass {
+            return superclass.find_method(name);
+        }
+
+        None
     }
 }
 
