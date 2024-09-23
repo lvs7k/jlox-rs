@@ -179,7 +179,7 @@ impl LoxClass {
         }
     }
 
-    fn find_method(&self, name: &str) -> Option<LoxFunction> {
+    pub fn find_method(&self, name: &str) -> Option<LoxFunction> {
         if let Some(function) = self.methods.as_ref().borrow().get(name) {
             return Some(function.clone());
         }

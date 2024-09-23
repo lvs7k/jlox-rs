@@ -4,7 +4,7 @@ use crate::{error::LoxError, object::Object, token::Token};
 
 #[derive(Debug)]
 pub struct Environment {
-    enclosing: Option<Rc<RefCell<Environment>>>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
     values: HashMap<String, Object>,
 }
 

@@ -194,6 +194,14 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
             self.resolve_expr(superclass);
         }
 
+        if stmt.superclass.is_some() {
+            self.begin_scope();
+            self.scopes
+                .last_mut()
+                .unwrap()
+                .insert("super".to_string(), true);
+        }
+
         self.begin_scope();
         self.scopes
             .last_mut()
@@ -214,6 +222,10 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         }
 
         self.end_scope();
+
+        if stmt.superclass.is_some() {
+            self.end_scope();
+        }
 
         self.current_class = enclosing_class;
     }
@@ -290,7 +302,7 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     }
 
     fn visit_super_expr(&mut self, expr: &ExprSuper) {
-        todo!();
+        self.resolve_local(&Expr::Super(expr.clone()), &expr.keyword);
     }
 }
 

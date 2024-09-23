@@ -293,7 +293,40 @@ impl ExprVisitor<Result<Object, LoxError>> for Interpreter {
     }
 
     fn visit_super_expr(&mut self, expr: &ExprSuper) -> Result<Object, LoxError> {
-        todo!();
+        let distance = self.locals.get(&Expr::Super(expr.clone())).unwrap();
+
+        let superclass = self
+            .environment
+            .as_ref()
+            .borrow()
+            .get_at(*distance, "super");
+
+        let object = self
+            .environment
+            .as_ref()
+            .borrow()
+            .get_at(*distance - 1, "this");
+
+        let method = if let Object::Callable(CallableKind::Class(ref lox_class)) = superclass {
+            lox_class.find_method(&expr.method.lexeme)
+        } else {
+            panic!("'super' must be LoxClass.");
+        };
+
+        if let Some(method) = method {
+            if let Object::Instance(instance) = object {
+                return Ok(Object::Callable(CallableKind::Function(
+                    method.bind(instance),
+                )));
+            } else {
+                panic!("This object must be LoxInstance");
+            }
+        }
+
+        Err(LoxError::RuntimeError(
+            expr.method.clone(),
+            format!("Undefined property '{}'.", expr.method.lexeme),
+        ))
     }
 }
 
@@ -415,6 +448,17 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             .borrow_mut()
             .define(stmt.name.lexeme.to_string(), Object::Null);
 
+        if stmt.superclass.is_some() {
+            self.environment = Rc::new(RefCell::new(Environment::new(Some(
+                self.environment.clone(),
+            ))));
+
+            self.environment
+                .as_ref()
+                .borrow_mut()
+                .define("super".to_string(), superclass.clone());
+        }
+
         let mut methods = HashMap::<String, LoxFunction>::new();
 
         for method in &stmt.methods {
@@ -433,14 +477,27 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
         }
 
         let klass = {
-            let superclass = if let Object::Callable(CallableKind::Class(lox_class)) = superclass {
-                Some(Rc::new(lox_class))
-            } else {
-                None
-            };
+            let superclass =
+                if let Object::Callable(CallableKind::Class(lox_class)) = superclass.clone() {
+                    Some(Rc::new(lox_class))
+                } else {
+                    None
+                };
 
             LoxClass::new(stmt.name.lexeme.to_string(), superclass, methods)
         };
+
+        if !superclass.is_null() {
+            let temp = self
+                .environment
+                .as_ref()
+                .borrow()
+                .enclosing
+                .clone()
+                .unwrap();
+
+            self.environment = temp;
+        }
 
         self.environment
             .as_ref()
