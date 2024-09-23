@@ -79,8 +79,12 @@ impl Stmt {
         Self::Return(StmtReturn { keyword, value })
     }
 
-    pub fn new_class(name: Token, methods: Vec<Stmt>) -> Self {
-        Self::Class(StmtClass { name, methods })
+    pub fn new_class(name: Token, superclass: Option<Expr>, methods: Vec<Stmt>) -> Self {
+        Self::Class(StmtClass {
+            name,
+            superclass,
+            methods,
+        })
     }
 }
 
@@ -134,5 +138,6 @@ pub struct StmtReturn {
 #[derive(Debug, Clone)]
 pub struct StmtClass {
     pub name: Token,
+    pub superclass: Option<Expr>,
     pub methods: Vec<Stmt>,
 }

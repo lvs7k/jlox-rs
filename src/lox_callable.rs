@@ -162,13 +162,19 @@ impl LoxCallable for NativeFunction {
 #[derive(Debug, Clone)]
 pub struct LoxClass {
     name: Rc<String>,
+    superclass: Option<Rc<LoxClass>>,
     methods: Rc<RefCell<HashMap<String, LoxFunction>>>,
 }
 
 impl LoxClass {
-    pub fn new(name: String, methods: HashMap<String, LoxFunction>) -> Self {
+    pub fn new(
+        name: String,
+        superclass: Option<Rc<LoxClass>>,
+        methods: HashMap<String, LoxFunction>,
+    ) -> Self {
         Self {
             name: Rc::new(name),
+            superclass,
             methods: Rc::new(RefCell::new(methods)),
         }
     }

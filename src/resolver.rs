@@ -185,6 +185,17 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         self.declare(&stmt.name);
         self.define(&stmt.name);
 
+        if let Some(Expr::Variable(ref variable)) = stmt.superclass {
+            if stmt.name.lexeme == variable.name.lexeme {
+                error::lox_error_token(&variable.name, "A class can't inherit from itself.");
+                self.had_error = true;
+            }
+        }
+
+        if let Some(ref superclass) = stmt.superclass {
+            self.resolve_expr(superclass);
+        }
+
         self.begin_scope();
         self.scopes
             .last_mut()

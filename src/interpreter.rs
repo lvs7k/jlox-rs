@@ -391,6 +391,21 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
     }
 
     fn visit_class_stmt(&mut self, stmt: &StmtClass) -> Result<(), LoxError> {
+        let mut superclass = Object::Null;
+
+        if let Some(ref stmt_superclass) = stmt.superclass {
+            superclass = self.evaluate(stmt_superclass)?;
+
+            if !matches!(superclass, Object::Callable(CallableKind::Class(_))) {
+                if let Some(Expr::Variable(ref expr_variable)) = stmt.superclass {
+                    return Err(LoxError::RuntimeError(
+                        expr_variable.name.clone(),
+                        "Superclass must be a class.".to_string(),
+                    ));
+                }
+            }
+        }
+
         self.environment
             .as_ref()
             .borrow_mut()
@@ -413,7 +428,15 @@ impl StmtVisitor<Result<(), LoxError>> for Interpreter {
             methods.insert(stmt_function.name.lexeme.to_string(), function);
         }
 
-        let klass = LoxClass::new(stmt.name.lexeme.to_string(), methods);
+        let klass = {
+            let superclass = if let Object::Callable(CallableKind::Class(lox_class)) = superclass {
+                Some(Rc::new(lox_class))
+            } else {
+                None
+            };
+
+            LoxClass::new(stmt.name.lexeme.to_string(), superclass, methods)
+        };
 
         self.environment
             .as_ref()

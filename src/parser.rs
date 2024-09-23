@@ -232,6 +232,12 @@ impl Parser {
             .consume(TokenType::Identifier, "Expect class name.")?
             .clone();
 
+        let mut superclass = None;
+        if self.match_tokentype(&[TokenType::Less]) {
+            self.consume(TokenType::Identifier, "Expect superclass name.")?;
+            superclass = Some(Expr::new_variable(self.previous().clone()));
+        }
+
         self.consume(TokenType::LeftBrace, "Expect '{' before class body.")?;
 
         let mut methods = vec![];
@@ -241,7 +247,7 @@ impl Parser {
 
         self.consume(TokenType::RightBrace, "Expect '}' after class body.")?;
 
-        Ok(Stmt::new_class(name, methods))
+        Ok(Stmt::new_class(name, superclass, methods))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
