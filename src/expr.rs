@@ -14,6 +14,7 @@ pub trait ExprVisitor<R> {
     fn visit_get_expr(&mut self, expr: &ExprGet) -> R;
     fn visit_set_expr(&mut self, expr: &ExprSet) -> R;
     fn visit_this_expr(&mut self, expr: &ExprThis) -> R;
+    fn visit_super_expr(&mut self, expr: &ExprSuper) -> R;
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +30,7 @@ pub enum Expr {
     Get(ExprGet),
     Set(ExprSet),
     This(ExprThis),
+    Super(ExprSuper),
 }
 
 impl Expr {
@@ -48,6 +50,7 @@ impl Expr {
             Expr::Get(ref expr) => visitor.visit_get_expr(expr),
             Expr::Set(ref expr) => visitor.visit_set_expr(expr),
             Expr::This(ref expr) => visitor.visit_this_expr(expr),
+            Expr::Super(ref expr) => visitor.visit_super_expr(expr),
         }
     }
 
@@ -138,6 +141,14 @@ impl Expr {
             keyword,
         })
     }
+
+    pub fn new_super(keyword: Token, method: Token) -> Self {
+        Self::Super(ExprSuper {
+            id: Uuid::new_v4(),
+            keyword,
+            method,
+        })
+    }
 }
 
 impl PartialEq for Expr {
@@ -154,6 +165,7 @@ impl PartialEq for Expr {
             (Expr::Get(l), Self::Get(r)) => l.id == r.id,
             (Expr::Set(l), Self::Set(r)) => l.id == r.id,
             (Expr::This(l), Self::This(r)) => l.id == r.id,
+            (Expr::Super(l), Self::Super(r)) => l.id == r.id,
             _ => false,
         }
     }
@@ -175,6 +187,7 @@ impl std::hash::Hash for Expr {
             Expr::Get(e) => e.id.hash(state),
             Expr::Set(e) => e.id.hash(state),
             Expr::This(e) => e.id.hash(state),
+            Expr::Super(e) => e.id.hash(state),
         }
     }
 }
@@ -254,4 +267,11 @@ pub struct ExprSet {
 pub struct ExprThis {
     id: Uuid,
     pub keyword: Token,
+}
+
+#[derive(Debug, Clone)]
+pub struct ExprSuper {
+    id: Uuid,
+    pub keyword: Token,
+    pub method: Token,
 }

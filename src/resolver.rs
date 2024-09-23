@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cell::Cell, collections::HashMap};
 
 use crate::{
     error::{self, LoxError},
@@ -14,7 +14,7 @@ pub struct Resolver<'a> {
     scopes: Vec<HashMap<String, bool>>,
     current_function: FunctionType,
     current_class: ClassType,
-    had_error: bool,
+    had_error: Cell<bool>,
 }
 
 impl<'a> Resolver<'a> {
@@ -24,16 +24,16 @@ impl<'a> Resolver<'a> {
             scopes: vec![],
             current_function: FunctionType::None,
             current_class: ClassType::None,
-            had_error: false,
+            had_error: Cell::new(false),
         }
     }
 
     pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), LoxError> {
-        self.had_error = false;
+        self.had_error.set(false);
 
         self.resolve_stmts(statements);
 
-        if self.had_error {
+        if self.had_error.get() {
             return Err(LoxError::ResolveError);
         }
 
@@ -41,8 +41,6 @@ impl<'a> Resolver<'a> {
     }
 
     fn resolve_stmts(&mut self, statements: &[Stmt]) {
-        self.had_error = false;
-
         for statement in statements {
             self.resolve_stmt(statement);
         }
@@ -73,7 +71,7 @@ impl<'a> Resolver<'a> {
 
         if scope.contains_key(&name.lexeme) {
             error::lox_error_token(name, "Already a variable with this name in this scope.");
-            self.had_error = true;
+            self.had_error.set(true);
         }
 
         scope.insert(name.lexeme.to_string(), false);
@@ -165,13 +163,13 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
     fn visit_return_stmt(&mut self, stmt: &StmtReturn) {
         if self.current_function == FunctionType::None {
             error::lox_error_token(&stmt.keyword, "Can't return from top-level code.");
-            self.had_error = true;
+            self.had_error.set(true);
         }
 
         if let Some(ref value) = stmt.value {
             if self.current_function == FunctionType::Initializer {
                 error::lox_error_token(&stmt.keyword, "Can't return a value from an initializer.");
-                self.had_error = true;
+                self.had_error.set(true);
             }
 
             self.resolve_expr(value);
@@ -188,7 +186,7 @@ impl<'a> StmtVisitor<()> for Resolver<'a> {
         if let Some(Expr::Variable(ref variable)) = stmt.superclass {
             if stmt.name.lexeme == variable.name.lexeme {
                 error::lox_error_token(&variable.name, "A class can't inherit from itself.");
-                self.had_error = true;
+                self.had_error.set(true);
             }
         }
 
@@ -248,7 +246,7 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
                 &expr.name,
                 "Can't read local variable in its own initializer.",
             );
-            self.had_error = true;
+            self.had_error.set(true);
         }
 
         self.resolve_local(&Expr::Variable(expr.clone()), &expr.name);
@@ -284,11 +282,15 @@ impl<'a> ExprVisitor<()> for Resolver<'a> {
     fn visit_this_expr(&mut self, expr: &ExprThis) {
         if self.current_class == ClassType::None {
             error::lox_error_token(&expr.keyword, "Can't use 'this' outside of a class.");
-            self.had_error = true;
+            self.had_error.set(true);
             return;
         }
 
         self.resolve_local(&Expr::This(expr.clone()), &expr.keyword);
+    }
+
+    fn visit_super_expr(&mut self, expr: &ExprSuper) {
+        todo!();
     }
 }
 
